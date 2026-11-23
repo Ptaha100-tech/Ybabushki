@@ -1,0 +1,5 @@
+# Caddy сам получает и продлевает HTTPS-сертификат для домена из переменной DOMAIN.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy web:80
+}

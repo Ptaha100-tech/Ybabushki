@@ -29,11 +29,11 @@ deploy.sh            обновление на сервере
 git clone https://github.com/Ptaha100-tech/Ybabushki.git
 cd Ybabushki
 cp .env.example .env
-nano .env            # задайте POSTGRES_PASSWORD и JWT_SECRET (openssl rand -hex 32)
+nano .env            # задайте POSTGRES_PASSWORD, JWT_SECRET (openssl rand -hex 32) и DOMAIN
 docker compose up -d --build
 ```
 
-Сайт откроется на `http://IP-вашего-сервера` (порт задаётся `WEB_PORT`). Проверка API: `http://IP/api/health` → `{"status":"ok"}`.
+Сайт откроется по адресу `https://ваш-домен` (см. раздел про HTTPS ниже). Проверка API: `https://ваш-домен/api/health` → `{"status":"ok"}`.
 
 Обновление после новых коммитов: `./deploy.sh`.
 
@@ -41,13 +41,11 @@ docker compose up -d --build
 
 ### HTTPS и домен
 
-Направьте домен на IP сервера и поставьте перед проектом Caddy (сертификаты выпускаются автоматически). Пример `/etc/caddy/Caddyfile`, если в `.env` указан `WEB_PORT=8080`:
+1. Создайте у регистратора DNS-запись типа `A` для `@` с IP вашего сервера.
+2. В файле `.env` задайте `DOMAIN=ваш-домен.ru` (без `http://`).
+3. Запустите `docker compose up -d --build`. Сервис Caddy сам получит сертификат и будет его продлевать.
 
-```
-ваш-домен.ru {
-    reverse_proxy localhost:8080
-}
-```
+Порты 80 и 443 на сервере должны быть открыты.
 
 ## Мобильное приложение
 
