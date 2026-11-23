@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Ybabushki",
+    "slug": "ybabushki",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "tech.ptaha100.ybabushki"
+    },
+    "android": {
+      "package": "tech.ptaha100.ybabushki"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Ybabushki"
+    }
+  }
+}
