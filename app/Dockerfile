@@ -1,7 +1,7 @@
 # Сборка веб-версии приложения (Expo → статические файлы) и раздача через nginx.
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm install
 COPY . .
 # Выравнивает версии пакетов под установленный Expo SDK; не критично, если не сработало.
