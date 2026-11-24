@@ -15,6 +15,7 @@ export interface User {
   role: Role;
   linkCode: string | null;
   classroomId: string | null;
+  grade?: number | null;
   xp: number;
   dayStreak: number;
 }
@@ -22,14 +23,47 @@ export interface Topic {
   id: string;
   title: string;
   grade: number;
-  position: number;
+  subject: string;
+  icon: string | null;
+  tasks?: number;
+  level?: number | null;
+}
+export interface SubjectMeta {
+  key: string;
+  title: string;
+  emoji: string;
+  color: string;
+  fromGrade: number;
+  toGrade: number;
+}
+export interface Catalog {
+  grade: number | null;
+  subjects: SubjectMeta[];
+  topics: Topic[];
+}
+export interface Badge {
+  id: string;
+  emoji: string;
+  title: string;
+  text: string;
+  earned: boolean;
+}
+export interface LightningTask {
+  id: string;
+  type: 'choice' | 'number';
+  prompt: string;
+  options: string[] | null;
+  answer: string;
 }
 export interface TaskDto {
   id: string;
   topicId: string;
-  type: 'choice' | 'number';
+  type: 'choice' | 'number' | 'text' | 'order' | 'match';
   prompt: string;
   options: string[] | null;
+  items: string[] | null;
+  lefts: string[] | null;
+  rights: string[] | null;
   difficulty: number;
 }
 export interface NextTask {
@@ -40,6 +74,7 @@ export interface NextTask {
 export interface AnswerResult {
   correct: boolean;
   correctAnswer: string | null;
+  explanation: string | null;
   hint: string | null;
   xp: number;
   dayStreak: number;
@@ -49,6 +84,13 @@ export interface AnswerResult {
 export interface Stats {
   id: string;
   name: string;
+  grade?: number | null;
+  level?: number;
+  title?: string;
+  avatar?: string;
+  xpToNext?: number;
+  progress?: number;
+  badges?: Badge[];
   xp: number;
   dayStreak: number;
   total: number;
@@ -133,12 +175,29 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
-  register: (b: { email: string; password: string; name: string; role: Role }) =>
+  register: (b: { email: string; password: string; name: string; role: Role; grade?: number }) =>
     request<{ token: string; user: User }>('POST', '/auth/register', b),
   login: (b: { email: string; password: string }) => request<{ token: string; user: User }>('POST', '/auth/login', b),
   me: () => request<User>('GET', '/auth/me'),
 
   topics: () => request<Topic[]>('GET', '/topics'),
+  catalog: () => request<Catalog>('GET', '/catalog'),
+  lightning: (subject?: string, grade?: number) => {
+    const q = new URLSearchParams();
+    if (subject) q.set('subject', subject);
+    if (grade) q.set('grade', String(grade));
+    return request<{ tasks: LightningTask[] }>('GET', `/games/lightning?${q.toString()}`);
+  },
+  memory: (subject?: string, grade?: number) => {
+    const q = new URLSearchParams();
+    if (subject) q.set('subject', subject);
+    if (grade) q.set('grade', String(grade));
+    return request<{ pairs: [string, string][] }>('GET', `/games/memory?${q.toString()}`);
+  },
+  gameResult: (game: 'lightning' | 'memory', score: number) =>
+    request<{ xp: number; totalXp: number; dailyCapReached: boolean }>('POST', '/games/result', { game, score }),
+  leaderboard: () =>
+    request<{ classroom: boolean; rows: { name: string; xp: number; me: boolean }[] }>('GET', '/me/leaderboard'),
   nextTask: (topicId: string, homeworkId?: string, exclude?: string) => {
     const q = new URLSearchParams();
     if (homeworkId) q.set('homeworkId', homeworkId);

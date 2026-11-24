@@ -24,7 +24,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://${POSTGRES_USER:-uchi}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-uchi}
       JWT_SECRET: ${JWT_SECRET:?Задайте JWT_SECRET в файле .env}
-      FREE_DAILY_LIMIT: ${FREE_DAILY_LIMIT:-10}
+      FREE_DAILY_LIMIT: ${FREE_DAILY_LIMIT:-20}
       PAYMENTS_MODE: ${PAYMENTS_MODE:-mock}
       DB_SYNC: ${DB_SYNC:-true}
 
