@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 export type Role = 'student' | 'teacher' | 'parent';
-export type TaskType = 'choice' | 'number';
+export type TaskType = 'choice' | 'number' | 'text' | 'order' | 'match';
 
 @Entity('users')
 export class User {
@@ -13,6 +13,7 @@ export class User {
   /** Код, по которому родитель привязывает ребёнка (только у учеников). */
   @Column({ type: 'varchar', nullable: true, unique: true }) linkCode: string | null;
   @Column({ type: 'uuid', nullable: true }) classroomId: string | null;
+  @Column({ type: 'int', nullable: true }) grade: number | null;
   @Column({ type: 'int', default: 0 }) xp: number;
   @Column({ type: 'int', default: 0 }) dayStreak: number;
   @Column({ type: 'date', nullable: true }) lastActiveDate: string | null;
@@ -35,6 +36,11 @@ export class Topic {
   @Column({ type: 'varchar' }) title: string;
   @Column({ type: 'int' }) grade: number;
   @Column({ type: 'int' }) position: number;
+  /** Устойчивый идентификатор темы из банка заданий (по нему идёт синхронизация). */
+  @Index({ unique: true }) @Column({ type: 'varchar', nullable: true }) slug: string | null;
+  @Column({ type: 'varchar', default: 'math' }) subject: string;
+  @Column({ type: 'varchar', nullable: true }) icon: string | null;
+  @Column({ type: 'varchar', nullable: true }) contentHash: string | null;
 }
 
 @Entity('tasks')
@@ -44,7 +50,14 @@ export class Task {
   @Column({ type: 'varchar' }) type: TaskType;
   @Column({ type: 'text' }) prompt: string;
   /** Формат задания как данные: сайт и приложение рисуют его одним и тем же кодом. */
-  @Column({ type: 'jsonb' }) data: { options?: string[]; answer: string };
+  @Column({ type: 'jsonb' }) data: {
+    options?: string[];
+    answer: string;
+    accept?: string[];
+    items?: string[];
+    pairs?: [string, string][];
+    explanation?: string;
+  };
   @Column({ type: 'int' }) difficulty: number;
   @Column({ type: 'text', nullable: true }) hint: string | null;
 }
@@ -67,6 +80,16 @@ export class Attempt {
   @Column({ type: 'uuid' }) topicId: string;
   @Column({ type: 'uuid', nullable: true }) homeworkId: string | null;
   @Column({ type: 'boolean' }) correct: boolean;
+  @CreateDateColumn() createdAt: Date;
+}
+
+@Entity('game_results')
+export class GameResult {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Index() @Column({ type: 'uuid' }) userId: string;
+  @Column({ type: 'varchar' }) game: string;
+  @Column({ type: 'int' }) score: number;
+  @Column({ type: 'int', default: 0 }) xp: number;
   @CreateDateColumn() createdAt: Date;
 }
 
@@ -108,4 +131,5 @@ export const ENTITIES = [
   Homework,
   ParentLink,
   Subscription,
+  GameResult,
 ];

@@ -1,89 +1,14 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Task, Topic } from './entities';
+import { In, IsNull, Repository } from 'typeorm';
+import { buildAll } from './content';
+import { Attempt, Homework, Progress, Task, Topic } from './entities';
 
-const rnd = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = rnd(0, i);
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-interface Spec {
-  title: string;
-  grade: number;
-  hint: string;
-  /** Генератор примера для сложности d = 1..5. */
-  gen: (d: number) => { prompt: string; answer: number };
-}
-
-const SPECS: Spec[] = [
-  {
-    title: 'Сложение в пределах 20',
-    grade: 1,
-    hint: 'Начни с большего числа и прибавляй меньшее по одному.',
-    gen: (d) => {
-      const max = [10, 12, 15, 18, 20][d - 1];
-      const a = rnd(1, max - 1);
-      const b = rnd(1, max - a);
-      return { prompt: `${a} + ${b} = ?`, answer: a + b };
-    },
-  },
-  {
-    title: 'Вычитание в пределах 20',
-    grade: 1,
-    hint: 'Отсчитай нужное количество назад от большего числа.',
-    gen: (d) => {
-      const max = [10, 12, 15, 18, 20][d - 1];
-      const a = rnd(2, max);
-      const b = rnd(1, a - 1);
-      return { prompt: `${a} − ${b} = ?`, answer: a - b };
-    },
-  },
-  {
-    title: 'Таблица умножения',
-    grade: 2,
-    hint: 'Умножение — это сложение одинаковых чисел: 4 × 3 = 4 + 4 + 4.',
-    gen: (d) => {
-      const m = [3, 5, 7, 9, 10][d - 1];
-      const a = rnd(2, m);
-      const b = rnd(2, m);
-      return { prompt: `${a} × ${b} = ?`, answer: a * b };
-    },
-  },
-  {
-    title: 'Деление',
-    grade: 3,
-    hint: 'Вспомни таблицу умножения: на что нужно умножить делитель, чтобы получить делимое?',
-    gen: (d) => {
-      const m = [3, 5, 7, 9, 10][d - 1];
-      const b = rnd(2, m);
-      const q = rnd(2, m);
-      return { prompt: `${b * q} ÷ ${b} = ?`, answer: q };
-    },
-  },
-  {
-    title: 'Умножение на однозначное число',
-    grade: 4,
-    hint: 'Умножь отдельно десятки и единицы, потом сложи результаты.',
-    gen: (d) => {
-      const maxA = [30, 50, 99, 150, 250][d - 1];
-      const maxB = [3, 5, 7, 9, 9][d - 1];
-      const a = rnd(11, maxA);
-      const b = rnd(2, maxB);
-      return { prompt: `${a} × ${b} = ?`, answer: a * b };
-    },
-  },
-];
-
-const TASKS_PER_LEVEL = 12;
-
-/** При первом запуске создаёт темы и сгенерированные задания по математике 1–4 классов. */
+/**
+ * При каждом запуске синхронизирует банк заданий (backend/src/content) с базой:
+ * новые темы добавляются, изменённые обновляются, старые тестовые темы без slug удаляются.
+ * Прогресс учеников по неизменённым темам сохраняется.
+ */
 @Injectable()
 export class SeedService implements OnApplicationBootstrap {
   private log = new Logger('Seed');
@@ -91,44 +16,63 @@ export class SeedService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(Topic) private topics: Repository<Topic>,
     @InjectRepository(Task) private tasks: Repository<Task>,
+    @InjectRepository(Progress) private progress: Repository<Progress>,
+    @InjectRepository(Attempt) private attempts: Repository<Attempt>,
+    @InjectRepository(Homework) private homeworks: Repository<Homework>,
   ) {}
 
   async onApplicationBootstrap() {
-    if ((await this.topics.count()) > 0) return;
-
-    for (let i = 0; i < SPECS.length; i++) {
-      const spec = SPECS[i];
-      const topic = await this.topics.save(
-        this.topics.create({ title: spec.title, grade: spec.grade, position: i }),
-      );
-      const batch: Task[] = [];
-      for (let d = 1; d <= 5; d++) {
-        for (let n = 0; n < TASKS_PER_LEVEL; n++) {
-          const { prompt, answer } = spec.gen(d);
-          const asChoice = n % 2 === 1;
-          const data: Task['data'] = { answer: String(answer) };
-          if (asChoice) {
-            const options = new Set<number>([answer]);
-            while (options.size < 4) {
-              const candidate = answer + rnd(-5, 5);
-              if (candidate >= 0) options.add(candidate);
-            }
-            data.options = shuffle([...options]).map(String);
-          }
-          batch.push(
-            this.tasks.create({
-              topicId: topic.id,
-              type: asChoice ? 'choice' : 'number',
-              prompt,
-              data,
-              difficulty: d,
-              hint: spec.hint,
-            }),
-          );
-        }
-      }
-      await this.tasks.save(batch);
+    // 1. Удаляем старые темы первой версии (без slug) вместе с зависимыми данными.
+    const legacy = await this.topics.find({ where: { slug: IsNull() } });
+    if (legacy.length) {
+      const ids = legacy.map((t) => t.id);
+      await this.homeworks.delete({ topicId: In(ids) });
+      await this.progress.delete({ topicId: In(ids) });
+      await this.attempts.delete({ topicId: In(ids) });
+      await this.tasks.delete({ topicId: In(ids) });
+      await this.topics.delete({ id: In(ids) });
+      this.log.log(`Удалено старых тем: ${legacy.length}`);
     }
-    this.log.log(`Создано тем: ${SPECS.length}, заданий: ${SPECS.length * 5 * TASKS_PER_LEVEL}`);
+
+    // 2. Синхронизируем банк заданий.
+    const bank = buildAll();
+    const existing = new Map((await this.topics.find()).map((t) => [t.slug, t]));
+    let added = 0;
+    let updated = 0;
+    for (const t of bank) {
+      const row = existing.get(t.slug);
+      if (row && row.contentHash === t.contentHash) {
+        if (row.position !== t.position) await this.topics.update(row.id, { position: t.position });
+        continue;
+      }
+      const topic =
+        row ??
+        (await this.topics.save(
+          this.topics.create({ slug: t.slug, title: t.title, grade: t.grade, position: t.position, subject: t.subject, icon: t.icon, contentHash: null }),
+        ));
+      if (row) {
+        await this.tasks.delete({ topicId: row.id });
+        updated++;
+      } else added++;
+      const rows = t.tasks.map((s) =>
+        this.tasks.create({ topicId: topic.id, type: s.type, prompt: s.prompt, data: s.data, difficulty: s.difficulty, hint: s.hint }),
+      );
+      for (let i = 0; i < rows.length; i += 300) await this.tasks.save(rows.slice(i, i + 300));
+      await this.topics.update(topic.id, {
+        title: t.title, grade: t.grade, position: t.position, subject: t.subject, icon: t.icon, contentHash: t.contentHash,
+      });
+    }
+
+    // 3. Темы, которых больше нет в банке, удаляем.
+    const slugs = new Set(bank.map((t) => t.slug));
+    const gone = [...existing.values()].filter((t) => t.slug && !slugs.has(t.slug));
+    if (gone.length) {
+      const ids = gone.map((t) => t.id);
+      await this.homeworks.delete({ topicId: In(ids) });
+      await this.progress.delete({ topicId: In(ids) });
+      await this.tasks.delete({ topicId: In(ids) });
+      await this.topics.delete({ id: In(ids) });
+    }
+    this.log.log(`Банк заданий: тем ${bank.length}; добавлено ${added}, обновлено ${updated}, удалено ${gone.length}`);
   }
 }

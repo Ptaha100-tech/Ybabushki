@@ -17,6 +17,7 @@ export function publicUser(u: User) {
     role: u.role,
     linkCode: u.linkCode,
     classroomId: u.classroomId,
+    grade: u.grade,
     xp: u.xp,
     dayStreak: u.dayStreak,
   };

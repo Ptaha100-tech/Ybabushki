@@ -2,7 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { Repository } from 'typeorm';
 import { publicUser, randomCode } from '../common';
 import { Role, User } from '../entities';
@@ -12,6 +12,7 @@ export class RegisterDto {
   @IsString() @MinLength(6) @MaxLength(100) password: string;
   @IsString() @MinLength(2) @MaxLength(60) name: string;
   @IsIn(['student', 'teacher', 'parent']) role: Role;
+  @IsOptional() @IsInt() @Min(1) @Max(11) grade?: number;
 }
 
 export class LoginDto {
@@ -35,6 +36,7 @@ export class AuthService {
       passwordHash: await bcrypt.hash(dto.password, 10),
       linkCode: dto.role === 'student' ? await this.freeLinkCode() : null,
       classroomId: null,
+      grade: dto.role === 'student' ? dto.grade ?? null : null,
       lastActiveDate: null,
     });
     await this.users.save(user);

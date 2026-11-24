@@ -4,7 +4,7 @@ import { AuthGuard, AuthUser, CurrentUser, Roles } from '../auth/guards';
 import { LearningService } from './learning.service';
 
 export class AnswerDto {
-  @IsString() @MaxLength(50) answer: string;
+  @IsString() @MaxLength(400) answer: string;
   @IsOptional() @IsUUID() homeworkId?: string;
 }
 
@@ -33,6 +33,11 @@ export class LearningController {
   @Post('tasks/:id/answer')
   answer(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) taskId: string, @Body() dto: AnswerDto) {
     return this.learning.answer(user.id, taskId, dto.answer, dto.homeworkId);
+  }
+
+  @Get('catalog')
+  catalog(@CurrentUser() user: AuthUser) {
+    return this.learning.catalog(user.id);
   }
 
   @Roles('student')

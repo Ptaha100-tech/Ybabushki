@@ -1,11 +1,13 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThanOrEqual, Repository } from 'typeorm';
-import { Attempt, Homework, Progress, Task, Topic, User } from '../entities';
+import { Attempt, GameResult, Homework, Progress, Task, Topic, User } from '../entities';
+import { SUBJECTS } from '../content/subjects';
+import { badgesFor, levelInfo } from '../gamification';
 import { SubscriptionsService } from '../subscriptions.service';
 
 /** Сколько заданий в день ученик решает бесплатно (домашние задания учителя не считаются). */
-const FREE_DAILY_LIMIT = Number(process.env.FREE_DAILY_LIMIT ?? 10);
+const FREE_DAILY_LIMIT = Number(process.env.FREE_DAILY_LIMIT ?? 20);
 const MAX_LEVEL = 5;
 
 @Injectable()
@@ -17,11 +19,32 @@ export class LearningService {
     @InjectRepository(Attempt) private attempts: Repository<Attempt>,
     @InjectRepository(User) private users: Repository<User>,
     @InjectRepository(Homework) private homeworks: Repository<Homework>,
+    @InjectRepository(GameResult) private games: Repository<GameResult>,
     private subs: SubscriptionsService,
   ) {}
 
   listTopics() {
-    return this.topics.find({ order: { grade: 'ASC', position: 'ASC' } });
+    return this.topics.find({ order: { position: 'ASC' } });
+  }
+
+  /** Каталог для клиента: предметы и темы (с уровнем ученика по каждой теме). */
+  async catalog(userId: string) {
+    const topics = await this.topics.find({ order: { position: 'ASC' } });
+    const counts: { topicId: string; n: string }[] = await this.tasks.query(
+      `SELECT "topicId", COUNT(*)::text AS n FROM tasks GROUP BY "topicId"`,
+    );
+    const nMap = new Map(counts.map((c) => [c.topicId, Number(c.n)]));
+    const prog = await this.progress.find({ where: { userId } });
+    const pMap = new Map(prog.map((p) => [p.topicId, p.level]));
+    const user = await this.users.findOne({ where: { id: userId } });
+    return {
+      grade: user?.grade ?? null,
+      subjects: SUBJECTS,
+      topics: topics.map((t) => ({
+        id: t.id, title: t.title, grade: t.grade, subject: t.subject, icon: t.icon,
+        tasks: nMap.get(t.id) ?? 0, level: pMap.get(t.id) ?? null,
+      })),
+    };
   }
 
   private startOfToday(): Date {
@@ -67,7 +90,7 @@ export class LearningService {
     }
 
     const prog = await this.getProgress(userId, topicId);
-    const task = await this.pickTask(topicId, prog.level, excludeTaskId);
+    const task = await this.pickTask(userId, topicId, prog.level, excludeTaskId);
     if (!task) throw new NotFoundException('В этой теме пока нет заданий');
     return { task: this.publicTask(task), level: prog.level, remaining };
   }
@@ -108,7 +131,8 @@ export class LearningService {
 
     return {
       correct,
-      correctAnswer: correct ? null : task.data.answer,
+      correctAnswer: correct ? null : this.showAnswer(task),
+      explanation: task.data.explanation ?? null,
       hint: correct ? null : task.hint,
       xp: user.xp,
       dayStreak: user.dayStreak,
@@ -122,14 +146,23 @@ export class LearningService {
     const total = await this.attempts.count({ where: { userId } });
     const correct = await this.attempts.count({ where: { userId, correct: true } });
     const sub = await this.subs.active(userId);
+    const accuracy = total ? Math.round((correct / total) * 100) : 0;
+    const subj: { n: string }[] = await this.attempts.query(
+      `SELECT COUNT(DISTINCT t.subject)::text AS n FROM attempts a JOIN topics t ON t.id = a."topicId" WHERE a."userId" = $1`,
+      [userId],
+    );
+    const gamesPlayed = await this.games.count({ where: { userId } });
     return {
       id: user.id,
       name: user.name,
+      grade: user.grade,
       xp: user.xp,
       dayStreak: user.dayStreak,
+      ...levelInfo(user.xp),
+      badges: badgesFor({ total, correct, dayStreak: user.dayStreak, accuracy, subjects: Number(subj[0]?.n ?? 0), games: gamesPlayed }),
       total,
       correct,
-      accuracy: total ? Math.round((correct / total) * 100) : 0,
+      accuracy,
       remaining: await this.remainingToday(userId),
       subscriptionUntil: sub ? sub.expiresAt : null,
     };
@@ -159,39 +192,93 @@ export class LearningService {
     return found ?? this.progress.save(this.progress.create({ userId, topicId, level: 1, streak: 0 }));
   }
 
-  /** Берёт случайное задание, ближайшее к текущему уровню ученика. */
-  private async pickTask(topicId: string, level: number, excludeTaskId?: string): Promise<Task | null> {
-    const exclude = excludeTaskId ?? '00000000-0000-0000-0000-000000000000';
-    const rows: { id: string }[] = await this.tasks.query(
-      `SELECT id FROM tasks WHERE "topicId" = $1 AND id <> $3 ORDER BY ABS(difficulty - $2), RANDOM() LIMIT 1`,
-      [topicId, level, exclude],
+  /** Берёт случайное задание, ближайшее к уровню ученика, не повторяя недавно решённые. */
+  private async pickTask(userId: string, topicId: string, level: number, excludeTaskId?: string): Promise<Task | null> {
+    const recent: { taskId: string }[] = await this.attempts.query(
+      `SELECT "taskId" FROM attempts WHERE "userId" = $1 AND "topicId" = $2 ORDER BY "createdAt" DESC LIMIT 15`,
+      [userId, topicId],
     );
-    if (!rows.length) {
-      return this.tasks.findOne({ where: { topicId } });
+    const excl = recent.map((r) => r.taskId);
+    if (excludeTaskId && /^[0-9a-f-]{36}$/i.test(excludeTaskId)) excl.push(excludeTaskId);
+    for (const list of [excl, excludeTaskId ? [excludeTaskId] : []]) {
+      const rows: { id: string }[] = await this.tasks.query(
+        `SELECT id FROM tasks WHERE "topicId" = $1 AND id <> ALL($3::uuid[]) ORDER BY ABS(difficulty - $2), RANDOM() LIMIT 1`,
+        [topicId, level, list],
+      );
+      if (rows.length) return this.tasks.findOne({ where: { id: rows[0].id } });
     }
-    return this.tasks.findOne({ where: { id: rows[0].id } });
+    return this.tasks.findOne({ where: { topicId } });
+  }
+
+  private shuffled<T>(arr: T[], differFrom?: string): T[] {
+    for (let k = 0; k < 10; k++) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      if (!differFrom || a.join('|') !== differFrom) return a;
+    }
+    return arr.slice().reverse();
   }
 
   /** Клиенту правильный ответ не отдаём. */
-  private publicTask(t: Task) {
+  publicTask(t: Task) {
     return {
       id: t.id,
       topicId: t.topicId,
       type: t.type,
       prompt: t.prompt,
       options: t.data.options ?? null,
+      items: t.type === 'order' && t.data.items ? this.shuffled(t.data.items, t.data.items.join('|')) : null,
+      lefts: t.type === 'match' && t.data.pairs ? t.data.pairs.map((p) => p[0]) : null,
+      rights: t.type === 'match' && t.data.pairs ? this.shuffled(t.data.pairs.map((p) => p[1])) : null,
       difficulty: t.difficulty,
     };
   }
 
+  private showAnswer(t: Task): string {
+    if (t.type === 'order') return (t.data.items ?? []).join(' → ');
+    if (t.type === 'match') return (t.data.pairs ?? []).map((p) => `${p[0]} — ${p[1]}`).join('; ');
+    return t.data.answer;
+  }
+
+  private static norm(s: string): string {
+    return s.toLowerCase().replace(/ё/g, 'е').replace(/[\s]+/g, ' ').replace(/[.!]+$/, '').trim();
+  }
+
+  private static toNumber(s: string): number | null {
+    const x = s.trim().replace(',', '.').replace(/\s+/g, '');
+    if (/^-?\d+(\.\d+)?$/.test(x)) return Number(x);
+    const f = x.match(/^(-?\d+)\/(\d+)$/);
+    return f && Number(f[2]) !== 0 ? Number(f[1]) / Number(f[2]) : null;
+  }
+
   private check(task: Task, raw: string): boolean {
-    const norm = (s: string) => s.trim().replace(',', '.').toLowerCase();
-    const a = norm(raw);
-    const b = norm(task.data.answer);
-    if (a === b) return true;
-    const na = Number(a);
-    const nb = Number(b);
-    return a !== '' && !Number.isNaN(na) && !Number.isNaN(nb) && na === nb;
+    const N = LearningService.norm;
+    const data = task.data;
+    switch (task.type) {
+      case 'choice':
+        return raw.trim() === data.answer.trim();
+      case 'order':
+        return raw.trim() === data.answer;
+      case 'match': {
+        const want = new Map((data.pairs ?? []).map((p) => [p[0], p[1]]));
+        const got = raw.split('|').map((x) => x.split(/=(.*)/s));
+        return got.length === want.size && got.every(([l, r]) => want.get(l) === r);
+      }
+      default: {
+        const given = raw.trim();
+        if (!given) return false;
+        const variants = [data.answer, ...(data.accept ?? [])];
+        if (variants.some((v) => N(v) === N(given))) return true;
+        const g = LearningService.toNumber(given);
+        return g !== null && variants.some((v) => {
+          const n = LearningService.toNumber(v);
+          return n !== null && Math.abs(n - g) < 1e-9;
+        });
+      }
+    }
   }
 
   private touchStreak(user: User) {
