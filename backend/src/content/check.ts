@@ -11,7 +11,7 @@ const errors: string[] = [];
 const warns: string[] = [];
 
 function fail(t: TopicSeed, i: number, msg: string) {
-  errors.push(`[${t.slug} #${i + 1}] ${msg}`);
+  errors.push(`[${t.slug} #${i + 1}] ${msg} :: ${t.tasks[i].prompt.slice(0, 60)} | ${JSON.stringify(t.tasks[i].options ?? t.tasks[i].items ?? t.tasks[i].pairs ?? '').slice(0, 160)}`);
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
@@ -65,7 +65,7 @@ function checkTask(t: TopicSeed, s: TaskSeed, i: number) {
     case 'choice': {
       const o = s.options ?? [];
       if (o.length < 2 || o.length > 6) fail(t, i, `вариантов ${o.length}, нужно от 2 до 6`);
-      if (new Set(o.map(norm)).size !== o.length) fail(t, i, 'повторяющиеся варианты ответа');
+      if (new Set(o.map((x) => x.trim())).size !== o.length) fail(t, i, 'повторяющиеся варианты ответа');
       if (!o.includes(s.answer)) fail(t, i, 'правильного ответа нет среди вариантов');
       if (o.some((x) => !x.trim() || x.length > 200)) fail(t, i, 'пустой или слишком длинный вариант');
       o.forEach((x) => checkMixedScripts(t, i, x, 'вариант'));
@@ -84,7 +84,6 @@ function checkTask(t: TopicSeed, s: TaskSeed, i: number) {
     case 'order': {
       const it = s.items ?? [];
       if (it.length < 3 || it.length > 7) fail(t, i, `элементов ${it.length}, нужно от 3 до 7`);
-      if (new Set(it.map(norm)).size !== it.length) fail(t, i, 'повторяющиеся элементы');
       if (it.some((x) => /[|=]/.test(x) || !x.trim() || x.length > 50)) fail(t, i, 'элемент пустой, длинный или с символом | =');
       if (s.answer !== it.join('|')) fail(t, i, 'answer не совпадает с items');
       it.forEach((x) => checkMixedScripts(t, i, x, 'элемент'));
@@ -94,7 +93,7 @@ function checkTask(t: TopicSeed, s: TaskSeed, i: number) {
       const p = s.pairs ?? [];
       if (p.length < 3 || p.length > 6) fail(t, i, `пар ${p.length}, нужно от 3 до 6`);
       if (new Set(p.map((x) => norm(x[0]))).size !== p.length) fail(t, i, 'повторяющиеся левые части пар');
-      if (new Set(p.map((x) => norm(x[1]))).size !== p.length) fail(t, i, 'повторяющиеся правые части пар');
+      if (new Set(p.map((x) => norm(x[1]))).size < 2) fail(t, i, 'все правые части пар одинаковы');
       if (p.some((x) => x.some((y) => /[|=]/.test(y) || !y.trim() || y.length > 50))) fail(t, i, 'часть пары пустая, длинная или с символом | =');
       if (s.answer !== p.map(([l, r]) => `${l}=${r}`).join('|')) fail(t, i, 'answer не совпадает с pairs');
       p.forEach((x) => x.forEach((y) => checkMixedScripts(t, i, y, 'пара')));

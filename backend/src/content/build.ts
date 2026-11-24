@@ -79,8 +79,9 @@ export function generate(
     let made = 0;
     for (let tries = 0; made < perLevel && tries < perLevel * 60; tries++) {
       const t = make(r, d);
-      if (!t || seen.has(t.prompt)) continue;
-      seen.add(t.prompt);
+      const key = t ? t.prompt + '#' + t.answer : '';
+      if (!t || seen.has(key)) continue;
+      seen.add(key);
       out.push({ ...t, difficulty: d });
       made++;
     }
