@@ -1,5 +1,6 @@
 import { choice as C, tf as T, num as N, txt as X, order as O, match as M, topic, Extra } from './build';
 import { TopicSeed } from './types';
+import { russianHigh } from './russianHigh';
 
 const E = (explanation: string, hint?: string): Extra => (hint ? { explanation, hint } : { explanation });
 
@@ -532,4 +533,4 @@ const g8: TopicSeed[] = [
   ], '💬'),
 ];
 
-export const russianTopics: TopicSeed[] = [...g1, ...g2, ...g3, ...g4, ...g5, ...g6, ...g7, ...g8];
+export const russianTopics: TopicSeed[] = [...g1, ...g2, ...g3, ...g4, ...g5, ...g6, ...g7, ...g8, ...russianHigh];
