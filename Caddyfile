@@ -1,5 +1,27 @@
 # Caddy сам получает и продлевает HTTPS-сертификат для домена из переменной DOMAIN.
+# Пока DNS домена не заработал, сертификат не выдастся: Caddy повторяет попытки сам,
+# а сайт остаётся доступен по IP-адресу через блок "http://" ниже.
+
+(security) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
 {$DOMAIN} {
-	encode gzip
+	import security
+	header Strict-Transport-Security "max-age=31536000"
+	encode zstd gzip
+	reverse_proxy web:80
+}
+
+# Запасной вход по IP-адресу (без HTTPS) и для любых других имён на порту 80.
+http:// {
+	import security
+	encode zstd gzip
 	reverse_proxy web:80
 }
