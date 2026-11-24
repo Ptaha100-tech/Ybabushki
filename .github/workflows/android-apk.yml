@@ -1,0 +1,54 @@
+name: Сборка Android APK
+
+# Запуск вручную: вкладка Actions → «Сборка Android APK» → Run workflow.
+# Готовый APK появится в Releases (тег apk-latest) и в артефактах запуска.
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: Адрес API (с https)
+        default: https://my-school-51.ru/api
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Установка зависимостей
+        working-directory: app
+        run: npm install
+      - name: Выравнивание версий Expo
+        working-directory: app
+        run: npx expo install --fix || true
+      - name: Генерация Android-проекта
+        working-directory: app
+        env:
+          EXPO_PUBLIC_API_URL: ${{ inputs.api_url }}
+        run: npx expo prebuild --platform android --no-install
+      - name: Сборка APK
+        working-directory: app/android
+        env:
+          EXPO_PUBLIC_API_URL: ${{ inputs.api_url }}
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Переименование
+        run: cp app/android/app/build/outputs/apk/release/app-release.apk moya-shkola.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moya-shkola-apk
+          path: moya-shkola.apk
+      - name: Публикация в Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Моя школа — Android APK
+          files: moya-shkola.apk
