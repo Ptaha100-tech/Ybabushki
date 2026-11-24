@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ClassDetail, ClassSummary, errMsg, Topic, User } from '../api';
+import TopicBrowser from '../TopicBrowser';
 import { Button, Card, Chip, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
 export default function TeacherScreen({ user, onLogout }: { user: User; onLogout: () => void }) {
@@ -129,11 +130,7 @@ function ClassView({ id, onBack }: { id: string; onBack: () => void }) {
 
           <Heading>Выдать домашнее задание</Heading>
           <Card>
-            <Row style={{ marginBottom: 12 }}>
-              {topics.map((t) => (
-                <Chip key={t.id} label={t.title} active={topicId === t.id} onPress={() => setTopicId(t.id)} />
-              ))}
-            </Row>
+            <TopicBrowser selectedId={topicId} onPick={(t) => setTopicId(t.id)} />
             <ErrorText text={error} />
             <InfoText text={info} />
             <Button title="Выдать классу" onPress={assign} disabled={!topicId} />

@@ -1,21 +1,24 @@
 {
   "expo": {
-    "name": "Ybabushki",
-    "slug": "ybabushki",
-    "version": "0.1.0",
+    "name": "Моя школа",
+    "slug": "moya-shkola",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "tech.ptaha100.ybabushki"
+      "bundleIdentifier": "ru.myschool51.app"
     },
     "android": {
-      "package": "tech.ptaha100.ybabushki"
+      "package": "ru.myschool51.app"
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "name": "Ybabushki"
+      "name": "Моя школа",
+      "shortName": "Моя школа",
+      "backgroundColor": "#F6F7FB",
+      "themeColor": "#4F46E5"
     }
   }
 }

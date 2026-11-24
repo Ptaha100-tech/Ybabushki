@@ -8,8 +8,9 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'parent', label: 'Я родитель' },
 ];
 
-export default function AuthScreen({ onAuth }: { onAuth: (u: User) => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { onAuth: (u: User) => void; initialMode?: 'login' | 'register'; onBack?: () => void }) {
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [grade, setGrade] = useState<number>(1);
   const [role, setRole] = useState<Role>('student');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,7 +25,7 @@ export default function AuthScreen({ onAuth }: { onAuth: (u: User) => void }) {
       const res =
         mode === 'login'
           ? await api.login({ email, password })
-          : await api.register({ email, password, name, role });
+          : await api.register({ email, password, name, role, grade: role === 'student' ? grade : undefined });
       await setToken(res.token);
       onAuth(res.user);
     } catch (e) {
@@ -36,6 +37,7 @@ export default function AuthScreen({ onAuth }: { onAuth: (u: User) => void }) {
 
   return (
     <Screen>
+      {onBack && <Button kind="secondary" title="← На главную" onPress={onBack} />}
       <Title>{mode === 'login' ? 'Вход' : 'Регистрация'}</Title>
       <Card>
         {mode === 'register' && (
@@ -45,7 +47,17 @@ export default function AuthScreen({ onAuth }: { onAuth: (u: User) => void }) {
                 <Chip key={r.value} label={r.label} active={role === r.value} onPress={() => setRole(r.value)} />
               ))}
             </Row>
-            <Field label="Имя" value={name} onChangeText={setName} placeholder="Как к вам обращаться" />
+            <Field label="Имя" value={name} onChangeText={setName} placeholder="Имя или псевдоним" />
+            {role === 'student' && (
+              <>
+                <Muted>В каком ты классе?</Muted>
+                <Row style={{ marginBottom: 12 }}>
+                  {Array.from({ length: 11 }, (_, i) => i + 1).map((g) => (
+                    <Chip key={g} label={String(g)} active={grade === g} onPress={() => setGrade(g)} />
+                  ))}
+                </Row>
+              </>
+            )}
           </>
         )}
         <Field
