@@ -82,6 +82,8 @@ export const SCENES = {
   walk: require('../assets/scenes/walk.webp'),
   board: require('../assets/scenes/board.webp'),
   jump: require('../assets/scenes/jump.webp'),
+  logo: require('../assets/scenes/logo.webp'),
+  slogan: require('../assets/scenes/slogan.webp'),
 };
 
 let current: HeroKey = 'boy';

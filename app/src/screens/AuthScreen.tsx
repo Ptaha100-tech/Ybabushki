@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { api, errMsg, Role, setToken, User } from '../api';
-import { HeroPic } from '../Art';
+import { HeroPic, Scene } from '../Art';
 import { guideFor, HERO_NAMES } from '../heroes';
 import { Button, Card, Chip, ErrorText, Field, Muted, Row, Screen, Title } from '../ui';
 

@@ -38,10 +38,7 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
       <View style={s.hero}>
         <View style={[s.blob, { width: 220, height: 220, right: -60, top: -60 }]} />
         <View style={[s.blob, { width: 140, height: 140, left: -40, bottom: -40 }]} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <Icon name="cap" size={34} />
-          <Text style={[s.logo, { marginBottom: 0 }]}>{BRAND}</Text>
-        </View>
+        <Scene name="logo" width={170} ratio={700 / 724} style={{ alignSelf: 'center', marginBottom: 10 }} />
         <Row style={{ marginBottom: 14 }}>
           {['ВПР', 'ОГЭ', 'ЕГЭ', '1–11 класс'].map((t) => (
             <View key={t} style={s.pill}>
@@ -116,6 +113,8 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
       </Card>
 
       <InstallCard />
+
+      <Scene name="slogan" width={300} ratio={800 / 781} style={{ alignSelf: 'center', marginVertical: 8 }} />
 
       <Text style={s.h2}>Вопросы и ответы</Text>
       {FAQ.map(([q, a], i) => (

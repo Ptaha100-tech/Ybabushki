@@ -66,7 +66,9 @@ export default function OnboardingScreen({ user, onUser, onDone }: { user: User;
       </View>
 
       <View style={s.stage}>
-        {step.scene ? (
+        {i === 0 ? (
+          <Scene name="slogan" width={260} ratio={800 / 781} />
+        ) : step.scene ? (
           <Scene name={step.scene} width={300} ratio={step.scene === 'board' ? 1.12 : step.scene === 'jump' ? 1.09 : 1.17} />
         ) : (
           <HeroPic hero={hero} pose={step.pose} size={230} />
