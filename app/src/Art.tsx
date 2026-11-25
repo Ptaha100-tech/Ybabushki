@@ -24,12 +24,12 @@ const EMOJI: Record<string, keyof typeof ICONS> = {
   '🥇': 'n_ribbon', '🥈': 'n_medals', '🥉': 'n_medals', '🏅': 'n_badges', '🌱': 'n_sprout',
   '🎉': 'n_party', '💡': 'n_bulb', '⚡': 'n_clock', '❓': 'n_card',
   '📘': 'n_prog', '🎯': 'n_vpr', '🎓': 'n_oge', '🏁': 'n_ege',
-  '📱': 'n_app', '📌': 'n_hw', '♾': 'n_unl', '👦': 'n_g_m', '👧': 'n_g_f',
+  '🧭': 'n_explorer', '👨‍🏫': 'n_t_m', '👩‍🏫': 'n_t_f', '🧔': 'n_p_m', '👩': 'n_p_f', '📱': 'n_app', '📌': 'n_hw', '♾': 'n_unl', '👦': 'n_g_m', '👧': 'n_g_f',
   '🔢': 'n_math', '📝': 'n_rus', '📖': 'n_lit', '🌳': 'n_okr', '🧬': 'n_bio', '🌍': 'n_geo', '🧪': 'n_chem', '🏛': 'n_hist', '💻': 'n_inf',
 };
 const SUBJECT_ICON: Record<string, keyof typeof ICONS> = {
   Математика: 'n_math', 'Русский язык': 'n_rus', Литература: 'n_lit', 'Окружающий мир': 'n_okr', Биология: 'n_bio',
-  География: 'n_geo', Физика: 'n_phys', Химия: 'n_chem', История: 'n_hist', Информатика: 'n_inf',
+  'Английский язык': 'n_eng', География: 'n_geo', Физика: 'n_phys', Химия: 'n_chem', История: 'n_hist', Информатика: 'n_inf',
 };
 
 /** Значок предмета по его названию (для английского значка пока нет — тогда эмодзи). */

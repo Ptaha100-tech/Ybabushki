@@ -66,8 +66,8 @@ export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { 
             <Field label="Имя" value={name} onChangeText={setName} placeholder="Имя или псевдоним" />
             <Muted>Пол</Muted>
             <Row style={{ marginBottom: 12 }}>
-              <Chip label={role === 'student' ? '👦 Мальчик' : '👨 Мужской'} active={gender === 'm'} onPress={() => setGender('m')} />
-              <Chip label={role === 'student' ? '👧 Девочка' : '👩 Женский'} active={gender === 'f'} onPress={() => setGender('f')} />
+              <Chip label={role === 'student' ? '👦 Мальчик' : role === 'teacher' ? '👨‍🏫 Мужской' : '🧔 Мужской'} active={gender === 'm'} onPress={() => setGender('m')} />
+              <Chip label={role === 'student' ? '👧 Девочка' : role === 'teacher' ? '👩‍🏫 Женский' : '👩 Женский'} active={gender === 'f'} onPress={() => setGender('f')} />
             </Row>
             {role === 'student' && (
               <>

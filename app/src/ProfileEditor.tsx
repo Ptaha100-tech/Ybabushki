@@ -18,8 +18,8 @@ export default function ProfileEditor({ user, onChange }: { user: User; onChange
     <>
       <Muted>Пол</Muted>
       <Row style={{ marginBottom: 10 }}>
-        <Chip label={user.role === 'student' ? '👦 Мальчик' : '👨 Мужской'} active={user.gender === 'm'} onPress={() => save({ gender: 'm' })} />
-        <Chip label={user.role === 'student' ? '👧 Девочка' : '👩 Женский'} active={user.gender === 'f'} onPress={() => save({ gender: 'f' })} />
+        <Chip label={user.role === 'student' ? '👦 Мальчик' : user.role === 'teacher' ? '👨‍🏫 Мужской' : '🧔 Мужской'} active={user.gender === 'm'} onPress={() => save({ gender: 'm' })} />
+        <Chip label={user.role === 'student' ? '👧 Девочка' : user.role === 'teacher' ? '👩‍🏫 Женский' : '👩 Женский'} active={user.gender === 'f'} onPress={() => save({ gender: 'f' })} />
       </Row>
       {user.role === 'student' && (
         <>

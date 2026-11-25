@@ -109,6 +109,12 @@ export const ICONS = {
   n_unl: require('../assets/ui/n-unl.webp'),
   n_g_m: require('../assets/ui/n-g_m.webp'),
   n_g_f: require('../assets/ui/n-g_f.webp'),
+  n_eng: require('../assets/ui/n-eng.webp'),
+  n_explorer: require('../assets/ui/n-explorer.webp'),
+  n_t_m: require('../assets/ui/n-t_m.webp'),
+  n_t_f: require('../assets/ui/n-t_f.webp'),
+  n_p_m: require('../assets/ui/n-p_m.webp'),
+  n_p_f: require('../assets/ui/n-p_f.webp'),
 };
 
 export const SCENES = {
