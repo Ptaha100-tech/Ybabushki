@@ -49,8 +49,30 @@ jobs:
         env:
           EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://my-school-51.ru/api' }}
         run: ./gradlew assembleRelease --no-daemon
-      - name: Переименование
-        run: cp app/android/app/build/outputs/apk/release/app-release.apk moya-shkola.apk
+      - name: Подпись APK
+        env:
+          # Если в настройках репозитория (Secrets) задан ключ — используется он,
+          # иначе создаётся новый ключ на время этой сборки.
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          APK=$(ls app/android/app/build/outputs/apk/release/*.apk | head -1)
+          echo "Собран: $APK"
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
+            echo "$KS_B64" | base64 -d > release.keystore
+            PASS="$KS_PASS"
+          else
+            PASS=$(openssl rand -hex 12)
+            keytool -genkeypair -keystore release.keystore -alias moyashkola -keyalg RSA -keysize 2048 \
+              -validity 36500 -storepass "$PASS" -keypass "$PASS" -dname "CN=Moya Shkola, C=RU"
+          fi
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BT/zipalign -f -p 4 "$APK" aligned.apk
+          $BT/apksigner sign --ks release.keystore --ks-key-alias moyashkola \
+            --ks-pass pass:"$PASS" --key-pass pass:"$PASS" \
+            --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+            --out moya-shkola.apk aligned.apk
+          $BT/apksigner verify --verbose moya-shkola.apk
       - uses: actions/upload-artifact@v4
         with:
           name: moya-shkola-apk
