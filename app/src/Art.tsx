@@ -51,14 +51,17 @@ const EMOJI_RX = new RegExp('(' + Object.keys(EMOJI).map((k) => k + '\\uFE0F?').
 export function RichText({ children, style, imgSize }: { children: React.ReactNode; style?: StyleProp<TextStyle>; imgSize?: number }) {
   const flat = StyleSheetFlat(style);
   const size = imgSize ?? Math.round((flat.fontSize ?? 16) * 1.35);
-  const parts = React.Children.toArray(children).flatMap((c, ci) =>
-    typeof c === 'string' || typeof c === 'number'
-      ? String(c).split(EMOJI_RX).map((piece, i) => {
+  const parts: React.ReactNode[] = [];
+  React.Children.toArray(children).forEach((c, ci) => {
+    if (typeof c === 'string' || typeof c === 'number') {
+      String(c)
+        .split(EMOJI_RX)
+        .forEach((piece, i) => {
           const k = EMOJI[piece.replace(/\uFE0F/g, '')];
-          return k ? <Image key={ci + '-' + i} source={ICONS[k]} resizeMode="contain" style={{ width: size, height: size }} /> : piece;
-        })
-      : [c],
-  );
+          parts.push(k ? <Image key={ci + '-' + i} source={ICONS[k]} resizeMode="contain" style={{ width: size, height: size }} /> : piece);
+        });
+    } else parts.push(c);
+  });
   return <Text style={style}>{parts}</Text>;
 }
 
