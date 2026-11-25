@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api, errMsg, LightningTask, SubjectMeta } from '../api';
+import { HeroPic, Icon } from '../Art';
+import { useHero } from '../heroes';
 import { Button, Card, Chip, colors, ErrorText, Heading, Muted, Row, Screen, Title } from '../ui';
 
 type Game = 'lightning' | 'memory' | null;
@@ -30,12 +32,12 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
         ))}
       </Row>
       <Card>
-        <Heading>⚡ Молния</Heading>
+        <Row style={{ flexWrap: 'nowrap' }}><Icon name="bulb" size={40} /><Heading>Молния</Heading></Row>
         <Muted>60 секунд. Отвечай на вопросы как можно быстрее. Серия верных ответов даёт бонус!</Muted>
         <Button title="Играть" onPress={() => setGame('lightning')} />
       </Card>
       <Card>
-        <Heading>🃏 Найди пару</Heading>
+        <Row style={{ flexWrap: 'nowrap' }}><Icon name="magnifier" size={40} /><Heading>Найди пару</Heading></Row>
         <Muted>Переворачивай карточки и находи пары: понятие и его значение. Чем меньше ходов, тем больше XP.</Muted>
         <Button title="Играть" onPress={() => setGame('memory')} />
       </Card>
@@ -44,6 +46,7 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
 }
 
 function Lightning({ subject, grade, onClose }: { subject?: string; grade?: number; onClose: () => void }) {
+  const hero = useHero();
   const [tasks, setTasks] = useState<LightningTask[] | null>(null);
   const [error, setError] = useState('');
   const [idx, setIdx] = useState(0);
@@ -112,6 +115,7 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
       <Screen>
         <Title>⚡ Время вышло!</Title>
         <Card>
+          <HeroPic hero={hero} pose="thumbs" size={130} />
           <Text style={s.big}>{correct} верных</Text>
           <Muted>Очки: {score}</Muted>
           <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
@@ -168,6 +172,7 @@ interface CardItem {
 }
 
 function Memory({ subject, grade, onClose }: { subject?: string; grade?: number; onClose: () => void }) {
+  const hero = useHero();
   const [cards, setCards] = useState<CardItem[] | null>(null);
   const [error, setError] = useState('');
   const [open, setOpen] = useState<number[]>([]);
@@ -242,6 +247,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
       </View>
       {finished && (
         <Card>
+          <HeroPic hero={hero} pose="thumbs" size={130} />
           <Text style={s.big}>Все пары найдены! 🎉</Text>
           <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
           <Button title="Закрыть" onPress={onClose} />

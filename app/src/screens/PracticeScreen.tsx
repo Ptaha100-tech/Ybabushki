@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AnswerResult, api, ApiError, errMsg, NextTask, Topic } from '../api';
+import { HeroPic } from '../Art';
+import { useHero } from '../heroes';
 import { Button, Card, colors, ErrorText, Field, Muted, Row, Screen, Title } from '../ui';
 
 /**
@@ -28,6 +30,7 @@ export default function PracticeScreen({
   const [loading, setLoading] = useState(true);
   const [done, setDone] = useState(0);
   const [right, setRight] = useState(0);
+  const hero = useHero();
 
   const fetchNext = useCallback(
     async (exclude?: string) => {
@@ -243,7 +246,12 @@ export default function PracticeScreen({
                   {result.hint ? <Muted>Подсказка: {result.hint}</Muted> : null}
                 </>
               )}
-              {result.explanation ? <Text style={s.explain}>💡 {result.explanation}</Text> : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <HeroPic hero={hero} pose={result.correct ? 'thumbs' : 'think'} size={86} />
+                <View style={{ flex: 1 }}>
+                  {result.explanation ? <Text style={s.explain}>💡 {result.explanation}</Text> : null}
+                </View>
+              </View>
               <Muted>
                 ⭐ {result.xp} XP · 🔥 {result.dayStreak} дн.
               </Muted>

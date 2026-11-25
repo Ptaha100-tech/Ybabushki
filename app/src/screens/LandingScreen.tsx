@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { HeroPic, Icon } from '../Art';
 import InstallCard from '../InstallCard';
 import { BRAND, SUBJECT_INFO } from '../config';
 import { Button, Card, colors, Heading, Muted, Row, Screen } from '../ui';
@@ -24,9 +25,9 @@ const STATS: [string, string, string, string][] = [
 ];
 
 const AUDIENCE: [string, string, string, string, string][] = [
-  ['🎒', 'Ученикам', 'Решай задания по уровню, играй, получай опыт, уровни и значки. Класс не нужен — просто зарегистрируйся.', colors.primary, '#fff'],
-  ['👩‍🏫', 'Учителям', 'Создайте класс, дайте ученикам код, выдавайте домашние задания и смотрите результаты каждого.', colors.cta, '#fff'],
-  ['👨‍👩‍👧', 'Родителям', 'Привяжите ребёнка по коду, следите за успехами и включайте безлимитные занятия.', colors.primaryDark, '#fff'],
+  ['backpack', 'Ученикам', 'Решай задания по уровню, играй, получай опыт, уровни и значки. Класс не нужен — просто зарегистрируйся.', colors.primary, '#fff'],
+  ['book_open', 'Учителям', 'Создайте класс, дайте ученикам код, выдавайте домашние задания и смотрите результаты каждого.', colors.cta, '#fff'],
+  ['trophy', 'Родителям', 'Привяжите ребёнка по коду, следите за успехами и включайте безлимитные занятия.', colors.primaryDark, '#fff'],
 ];
 
 export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'login' | 'register') => void; onInfo: (k: InfoKind) => void }) {
@@ -37,7 +38,10 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
       <View style={s.hero}>
         <View style={[s.blob, { width: 220, height: 220, right: -60, top: -60 }]} />
         <View style={[s.blob, { width: 140, height: 140, left: -40, bottom: -40 }]} />
-        <Text style={s.logo}>🎓 {BRAND}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <Icon name="cap" size={34} />
+          <Text style={[s.logo, { marginBottom: 0 }]}>{BRAND}</Text>
+        </View>
         <Row style={{ marginBottom: 14 }}>
           {['ВПР', 'ОГЭ', 'ЕГЭ', '1–11 класс'].map((t) => (
             <View key={t} style={s.pill}>
@@ -51,7 +55,11 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
         <Pressable onPress={() => onStart('login')} style={{ alignItems: 'center', padding: 10 }}>
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>У меня уже есть аккаунт</Text>
         </Pressable>
-        <Text style={s.heroEmoji}>🧑‍🎓</Text>
+        <View style={s.kids}>
+          <HeroPic hero="glasses" pose="wave" size={190} style={{ marginRight: -18 }} />
+          <HeroPic hero="boy" pose="thumbs" size={215} style={{ zIndex: 2 }} />
+          <HeroPic hero="pink" pose="wave" size={190} style={{ marginLeft: -18 }} />
+        </View>
       </View>
 
       {/* Цифры */}
@@ -68,7 +76,7 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
       <Text style={s.h2}>Для кого сервис</Text>
       {AUDIENCE.map(([e, t, d, bg, fg]) => (
         <View key={t} style={[s.audience, { backgroundColor: bg }]}>
-          <Text style={{ fontSize: 40 }}>{e}</Text>
+          <Icon name={e as any} size={52} />
           <Text style={[s.audTitle, { color: fg }]}>{t}</Text>
           <Text style={[s.audText, { color: fg }]}>{d}</Text>
         </View>
@@ -78,6 +86,7 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
       <View style={s.banner}>
         <Text style={s.bannerTitle}>Начни готовиться к ВПР, ОГЭ и ЕГЭ уже сейчас</Text>
         <Text style={s.bannerText}>Отдельные темы для экзаменов, объяснения к каждому заданию.</Text>
+        <HeroPic hero="pink" pose="idea" size={130} style={{ position: 'absolute', right: 8, top: 8 }} />
         <Pressable onPress={() => onStart('register')} style={s.bannerBtn}>
           <Text style={{ fontWeight: '800', color: colors.dark }}>Попробовать</Text>
         </Pressable>
@@ -130,7 +139,8 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
 }
 
 const s = StyleSheet.create({
-  hero: { backgroundColor: colors.primary, borderRadius: 32, padding: 22, marginBottom: 20, overflow: 'hidden' },
+  hero: { backgroundColor: colors.primary, borderRadius: 32, padding: 22, paddingBottom: 0, marginBottom: 20, overflow: 'hidden' },
+  kids: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: 10, height: 215 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.14)' },
   logo: { fontSize: 18, fontWeight: '800', color: '#fff', marginBottom: 14 },
   pill: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.8)', borderRadius: 999, paddingVertical: 5, paddingHorizontal: 12 },
@@ -147,7 +157,7 @@ const s = StyleSheet.create({
   audTitle: { fontSize: 22, fontWeight: '800', marginTop: 6, marginBottom: 6 },
   audText: { fontSize: 15, lineHeight: 22, opacity: 0.95 },
   banner: { backgroundColor: colors.primary, borderRadius: 28, padding: 22, marginTop: 14 },
-  bannerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 6, lineHeight: 28 },
+  bannerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 6, lineHeight: 28, paddingRight: 110 },
   bannerText: { color: 'rgba(255,255,255,0.92)', fontSize: 15, marginBottom: 14 },
   bannerBtn: { backgroundColor: '#fff', borderRadius: 16, paddingVertical: 13, alignItems: 'center' },
   subject: { width: '31%', backgroundColor: '#fff', borderRadius: 22, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },

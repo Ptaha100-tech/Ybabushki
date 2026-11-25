@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg, HomeworkItem, Stats, Topic, User } from '../api';
+import { HeroPic, Icon } from '../Art';
+import { HERO_LIST, setHero, useHero } from '../heroes';
 import InstallCard from '../InstallCard';
 import TopicBrowser from '../TopicBrowser';
 import { Button, Card, Chip, colors, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
@@ -12,6 +14,7 @@ type Tab = 'learn' | 'games' | 'rating' | 'me';
 
 export default function StudentScreen({ user, onLogout, onInfo }: { user: User; onLogout: () => void; onInfo: (k: InfoKind) => void }) {
   const [tab, setTab] = useState<Tab>('learn');
+  const hero = useHero();
   const [stats, setStats] = useState<Stats | null>(null);
   const [homework, setHomework] = useState<HomeworkItem[]>([]);
   const [practice, setPractice] = useState<{ topic: Topic; homeworkId?: string } | null>(null);
@@ -70,7 +73,7 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
         <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
             <View style={s.avatar}>
-              <Text style={{ fontSize: 30 }}>{stats?.avatar ?? '🐣'}</Text>
+              <HeroPic hero={hero} pose="wave" size={74} style={{ position: 'absolute', top: 0, left: -2 }} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.hello}>Привет, {user.name}!</Text>
@@ -118,7 +121,10 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
 
       {tab === 'rating' && (
         <>
-          <Heading>🏆 Рейтинг класса</Heading>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Icon name="trophy" size={44} />
+            <Heading>Рейтинг класса</Heading>
+          </View>
           {!board ? (
             <Muted>Загрузка…</Muted>
           ) : !board.classroom ? (
@@ -145,7 +151,7 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
         <>
           <Card>
             <Text style={s.big}>
-              {stats.avatar} Уровень {stats.level}: {stats.title}
+              Уровень {stats.level}: {stats.title}
             </Text>
             <View style={s.bar}>
               <View style={[s.barFill, { width: `${stats.progress ?? 0}%` }]} />
@@ -159,6 +165,16 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
               Код для родителей: <Text style={{ fontWeight: '800', color: colors.text }}>{user.linkCode}</Text>
             </Muted>
           </Card>
+
+          <Heading>Выбери героя</Heading>
+          <Row style={{ marginBottom: 8, flexWrap: 'nowrap', justifyContent: 'space-between' }}>
+            {HERO_LIST.map((h) => (
+              <Pressable key={h.key} onPress={() => setHero(h.key)} style={[s.heroCard, hero === h.key && { borderColor: colors.cta, backgroundColor: '#FFF3EB' }]}>
+                <HeroPic hero={h.key} pose="wave" size={96} />
+                <Text style={s.badgeTitle}>{h.name}</Text>
+              </Pressable>
+            ))}
+          </Row>
 
           <Heading>🏅 Значки</Heading>
           <Row style={{ marginBottom: 8 }}>
@@ -207,7 +223,7 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
 
 const s = StyleSheet.create({
   head: { backgroundColor: colors.primary, borderRadius: 28, padding: 18, marginBottom: 14 },
-  avatar: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#fff', overflow: 'hidden' },
   hello: { fontSize: 19, fontWeight: '800', color: '#fff' },
   lvl: { fontSize: 13, color: 'rgba(255,255,255,0.92)' },
   xpPill: { backgroundColor: '#fff', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
@@ -223,6 +239,7 @@ const s = StyleSheet.create({
   big: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 8 },
   bar: { height: 12, backgroundColor: '#E5E7EB', borderRadius: 6, overflow: 'hidden', marginBottom: 6 },
   barFill: { height: 12, backgroundColor: colors.primary },
+  heroCard: { flex: 1, alignItems: 'center', padding: 8, borderRadius: 18, borderWidth: 2, borderColor: colors.border, backgroundColor: '#fff', marginHorizontal: 3 },
   badge: { width: '31%', alignItems: 'center', padding: 8, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff' },
   badgeTitle: { fontSize: 12, fontWeight: '700', color: colors.text, textAlign: 'center' },
   badgeText: { fontSize: 10, color: colors.muted, textAlign: 'center' },

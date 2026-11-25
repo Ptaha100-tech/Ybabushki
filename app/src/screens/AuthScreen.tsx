@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { api, errMsg, Role, setToken, User } from '../api';
+import { HeroPic } from '../Art';
+import { useHero } from '../heroes';
 import { Button, Card, Chip, ErrorText, Field, Muted, Row, Screen, Title } from '../ui';
 
 const ROLES: { value: Role; label: string }[] = [
@@ -9,6 +12,7 @@ const ROLES: { value: Role; label: string }[] = [
 ];
 
 export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { onAuth: (u: User) => void; initialMode?: 'login' | 'register'; onBack?: () => void }) {
+  const hero = useHero();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [grade, setGrade] = useState<number>(1);
   const [role, setRole] = useState<Role>('student');
@@ -38,7 +42,12 @@ export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { 
   return (
     <Screen>
       {onBack && <Button kind="secondary" title="← На главную" onPress={onBack} />}
-      <Title>{mode === 'login' ? 'Вход' : 'Регистрация'}</Title>
+      <Row style={{ alignItems: 'flex-end', flexWrap: 'nowrap', marginBottom: 8 }}>
+        <HeroPic hero={hero} pose="wave" size={110} />
+        <View style={{ flex: 1 }}>
+          <Title>{mode === 'login' ? 'С возвращением!' : 'Давай знакомиться!'}</Title>
+        </View>
+      </Row>
       <Card>
         {mode === 'register' && (
           <>
