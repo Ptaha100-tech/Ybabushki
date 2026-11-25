@@ -13,6 +13,7 @@ export class RegisterDto {
   @IsString() @MinLength(2) @MaxLength(60) name: string;
   @IsIn(['student', 'teacher', 'parent']) role: Role;
   @IsOptional() @IsInt() @Min(1) @Max(11) grade?: number;
+  @IsIn(['m', 'f']) gender: 'm' | 'f';
 }
 
 export class LoginDto {
@@ -37,6 +38,7 @@ export class AuthService {
       linkCode: dto.role === 'student' ? await this.freeLinkCode() : null,
       classroomId: null,
       grade: dto.role === 'student' ? dto.grade ?? null : null,
+      gender: dto.gender,
       lastActiveDate: null,
     });
     await this.users.save(user);

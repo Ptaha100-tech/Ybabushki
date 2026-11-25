@@ -1,15 +1,16 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
 /** Герои (персонажи) и значки из папки assets. */
 export type HeroKey = 'glasses' | 'boy' | 'pink';
 export type Pose = 'wave' | 'point' | 'book' | 'think' | 'idea' | 'thumbs' | 'shrug' | 'write' | 'shrug2' | 'walk';
 
-export const HERO_LIST: { key: HeroKey; name: string }[] = [
-  { key: 'glasses', name: 'Умница' },
-  { key: 'boy', name: 'Непоседа' },
-  { key: 'pink', name: 'Выдумщица' },
-];
+/** Ведущие обучение: Серёжа — для мальчиков и мужчин, Варя — девочки 1–4 классов, Соня — девочки с 5 класса и женщины. */
+export const HERO_NAMES: Record<HeroKey, string> = { boy: 'Серёжа', glasses: 'Варя', pink: 'Соня' };
+
+export function guideFor(gender?: string | null, grade?: number | null): HeroKey {
+  if (gender === 'f') return grade && grade <= 4 ? 'glasses' : 'pink';
+  return 'boy';
+}
 
 const HEROES: Record<HeroKey, Record<Pose, any>> = {
   glasses: {
@@ -76,24 +77,26 @@ export const ICONS = {
   hand: require('../assets/ui/hand.webp'),
 };
 
+export const SCENES = {
+  table: require('../assets/scenes/table.webp'),
+  walk: require('../assets/scenes/walk.webp'),
+  board: require('../assets/scenes/board.webp'),
+  jump: require('../assets/scenes/jump.webp'),
+};
+
 let current: HeroKey = 'boy';
 const listeners = new Set<() => void>();
-AsyncStorage.getItem('hero')
-  .then((v) => {
-    if (v === 'glasses' || v === 'boy' || v === 'pink') {
-      current = v;
-      listeners.forEach((f) => f());
-    }
-  })
-  .catch(() => undefined);
 
-export function setHero(h: HeroKey) {
-  current = h;
-  AsyncStorage.setItem('hero', h).catch(() => undefined);
-  listeners.forEach((f) => f());
+/** Вызывается при входе/смене профиля: выбирает героя-ведущего по полу и классу. */
+export function setGuideUser(u: { gender?: string | null; grade?: number | null } | null) {
+  const next = guideFor(u?.gender, u?.grade);
+  if (next !== current) {
+    current = next;
+    listeners.forEach((f) => f());
+  }
 }
 
-/** Выбранный героя ученика (хранится на устройстве). */
+/** Герой-ведущий текущего пользователя. */
 export function useHero(): HeroKey {
   const [, force] = useState(0);
   useEffect(() => {

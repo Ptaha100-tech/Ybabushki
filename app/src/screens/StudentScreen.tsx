@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg, HomeworkItem, Stats, Topic, User } from '../api';
 import { HeroPic, Icon } from '../Art';
-import { HERO_LIST, setHero, useHero } from '../heroes';
+import { HERO_NAMES, useHero } from '../heroes';
+import ProfileEditor from '../ProfileEditor';
 import InstallCard from '../InstallCard';
 import TopicBrowser from '../TopicBrowser';
 import { Button, Card, Chip, colors, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
@@ -12,7 +13,7 @@ import PracticeScreen from './PracticeScreen';
 
 type Tab = 'learn' | 'games' | 'rating' | 'me';
 
-export default function StudentScreen({ user, onLogout, onInfo }: { user: User; onLogout: () => void; onInfo: (k: InfoKind) => void }) {
+export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }: { user: User; onLogout: () => void; onInfo: (k: InfoKind) => void; onUser: (u: User) => void; onTour: () => void }) {
   const [tab, setTab] = useState<Tab>('learn');
   const hero = useHero();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -166,15 +167,16 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
             </Muted>
           </Card>
 
-          <Heading>Выбери героя</Heading>
-          <Row style={{ marginBottom: 8, flexWrap: 'nowrap', justifyContent: 'space-between' }}>
-            {HERO_LIST.map((h) => (
-              <Pressable key={h.key} onPress={() => setHero(h.key)} style={[s.heroCard, hero === h.key && { borderColor: colors.cta, backgroundColor: '#FFF3EB' }]}>
-                <HeroPic hero={h.key} pose="wave" size={96} />
-                <Text style={s.badgeTitle}>{h.name}</Text>
-              </Pressable>
-            ))}
-          </Row>
+          <Heading>Мой помощник</Heading>
+          <Card style={{ alignItems: 'center' }}>
+            <HeroPic hero={hero} pose="wave" size={130} />
+            <Text style={s.big}>{HERO_NAMES[hero]}</Text>
+            <Muted>Помощник выбирается по полу и классу.</Muted>
+            <View style={{ alignSelf: 'stretch', marginTop: 8 }}>
+              <ProfileEditor user={user} onChange={onUser} />
+            </View>
+            <Button kind="secondary" title="Показать обучение" onPress={onTour} />
+          </Card>
 
           <Heading>🏅 Значки</Heading>
           <Row style={{ marginBottom: 8 }}>

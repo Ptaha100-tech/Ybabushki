@@ -1,3 +1,4 @@
+import { Scene } from '../Art';
 import React from 'react';
 import { Text } from 'react-native';
 import { BRAND, CONTACT_EMAIL } from '../config';
@@ -12,6 +13,7 @@ const P = ({ children }: { children: React.ReactNode }) => (
 export default function InfoScreen({ kind, onBack }: { kind: InfoKind; onBack: () => void }) {
   return (
     <Screen>
+      <Scene name="board" width={260} ratio={1.12} style={{ alignSelf: 'center' }} />
       <Button kind="secondary" title="← Назад" onPress={onBack} />
       {kind === 'about' && (
         <>

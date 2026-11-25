@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api, errMsg, LightningTask, SubjectMeta } from '../api';
-import { HeroPic, Icon } from '../Art';
+import { HeroPic, Icon, Scene } from '../Art';
 import { useHero } from '../heroes';
 import { Button, Card, Chip, colors, ErrorText, Heading, Muted, Row, Screen, Title } from '../ui';
 
@@ -115,7 +115,7 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
       <Screen>
         <Title>⚡ Время вышло!</Title>
         <Card>
-          <HeroPic hero={hero} pose="thumbs" size={130} />
+          <Scene name="jump" width={200} ratio={1.09} />
           <Text style={s.big}>{correct} верных</Text>
           <Muted>Очки: {score}</Muted>
           <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
@@ -247,7 +247,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
       </View>
       {finished && (
         <Card>
-          <HeroPic hero={hero} pose="thumbs" size={130} />
+          <Scene name="jump" width={200} ratio={1.09} />
           <Text style={s.big}>Все пары найдены! 🎉</Text>
           <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
           <Button title="Закрыть" onPress={onClose} />

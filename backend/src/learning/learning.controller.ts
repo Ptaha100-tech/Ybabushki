@@ -1,11 +1,16 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { AuthGuard, AuthUser, CurrentUser, Roles } from '../auth/guards';
 import { LearningService } from './learning.service';
 
 export class AnswerDto {
   @IsString() @MaxLength(400) answer: string;
   @IsOptional() @IsUUID() homeworkId?: string;
+}
+
+export class ProfileDto {
+  @IsOptional() @IsIn(['m', 'f']) gender?: 'm' | 'f';
+  @IsOptional() @IsInt() @Min(1) @Max(11) grade?: number;
 }
 
 @Controller()
@@ -33,6 +38,11 @@ export class LearningController {
   @Post('tasks/:id/answer')
   answer(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) taskId: string, @Body() dto: AnswerDto) {
     return this.learning.answer(user.id, taskId, dto.answer, dto.homeworkId);
+  }
+
+  @Patch('me/profile')
+  profile(@CurrentUser() user: AuthUser, @Body() dto: ProfileDto) {
+    return this.learning.updateProfile(user.id, dto);
   }
 
   @Get('catalog')

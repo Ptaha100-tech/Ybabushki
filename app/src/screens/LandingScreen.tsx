@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { HeroPic, Icon } from '../Art';
+import { HeroPic, Icon, Scene } from '../Art';
 import InstallCard from '../InstallCard';
 import { BRAND, SUBJECT_INFO } from '../config';
 import { Button, Card, colors, Heading, Muted, Row, Screen } from '../ui';
@@ -56,9 +56,7 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>У меня уже есть аккаунт</Text>
         </Pressable>
         <View style={s.kids}>
-          <HeroPic hero="glasses" pose="wave" size={190} style={{ marginRight: -18 }} />
-          <HeroPic hero="boy" pose="thumbs" size={215} style={{ zIndex: 2 }} />
-          <HeroPic hero="pink" pose="wave" size={190} style={{ marginLeft: -18 }} />
+          <Scene name="table" width={340} ratio={899 / 681} />
         </View>
       </View>
 
@@ -110,6 +108,7 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
 
       <Text style={s.h2}>Как начать</Text>
       <Card>
+        <Scene name="walk" width={300} ratio={1.17} style={{ alignSelf: 'center', marginBottom: 8 }} />
         <Text style={s.step}>1. Создайте аккаунт — ученик, учитель или родитель.</Text>
         <Text style={s.step}>2. Выберите класс, предмет и тему.</Text>
         <Text style={s.step}>3. Решайте задания, играйте и растите уровень.</Text>
@@ -140,7 +139,7 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
 
 const s = StyleSheet.create({
   hero: { backgroundColor: colors.primary, borderRadius: 32, padding: 22, paddingBottom: 0, marginBottom: 20, overflow: 'hidden' },
-  kids: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: 10, height: 215 },
+  kids: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: 10 },
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.14)' },
   logo: { fontSize: 18, fontWeight: '800', color: '#fff', marginBottom: 14 },
   pill: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.8)', borderRadius: 999, paddingVertical: 5, paddingHorizontal: 12 },

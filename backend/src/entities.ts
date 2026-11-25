@@ -14,6 +14,8 @@ export class User {
   @Column({ type: 'varchar', nullable: true, unique: true }) linkCode: string | null;
   @Column({ type: 'uuid', nullable: true }) classroomId: string | null;
   @Column({ type: 'int', nullable: true }) grade: number | null;
+  /** 'm' | 'f' — нужен, чтобы выбрать ведущего обучение героя. */
+  @Column({ type: 'varchar', length: 1, nullable: true }) gender: string | null;
   @Column({ type: 'int', default: 0 }) xp: number;
   @Column({ type: 'int', default: 0 }) dayStreak: number;
   @Column({ type: 'date', nullable: true }) lastActiveDate: string | null;

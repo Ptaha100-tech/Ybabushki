@@ -27,6 +27,15 @@ export class LearningService {
     return this.topics.find({ order: { position: 'ASC' } });
   }
 
+  /** Пол и класс можно поменять в профиле (класс — только у ученика). */
+  async updateProfile(userId: string, dto: { gender?: 'm' | 'f'; grade?: number }) {
+    const user = await this.users.findOneOrFail({ where: { id: userId } });
+    if (dto.gender) user.gender = dto.gender;
+    if (dto.grade && user.role === 'student') user.grade = dto.grade;
+    await this.users.save(user);
+    return { gender: user.gender, grade: user.grade };
+  }
+
   /** Каталог для клиента: предметы и темы (с уровнем ученика по каждой теме). */
   async catalog(userId: string) {
     const topics = await this.topics.find({ order: { position: 'ASC' } });

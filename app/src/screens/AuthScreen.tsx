@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { api, errMsg, Role, setToken, User } from '../api';
 import { HeroPic } from '../Art';
-import { useHero } from '../heroes';
+import { guideFor, HERO_NAMES } from '../heroes';
 import { Button, Card, Chip, ErrorText, Field, Muted, Row, Screen, Title } from '../ui';
 
 const ROLES: { value: Role; label: string }[] = [
@@ -12,7 +12,7 @@ const ROLES: { value: Role; label: string }[] = [
 ];
 
 export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { onAuth: (u: User) => void; initialMode?: 'login' | 'register'; onBack?: () => void }) {
-  const hero = useHero();
+  const [gender, setGender] = useState<'m' | 'f' | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [grade, setGrade] = useState<number>(1);
   const [role, setRole] = useState<Role>('student');
@@ -22,14 +22,20 @@ export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { 
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const hero = guideFor(gender, role === 'student' ? grade : null);
+
   const submit = async () => {
     setError('');
+    if (mode === 'register' && !gender) {
+      setError('Укажите пол — по нему мы выберем вашего помощника.');
+      return;
+    }
     setBusy(true);
     try {
       const res =
         mode === 'login'
           ? await api.login({ email, password })
-          : await api.register({ email, password, name, role, grade: role === 'student' ? grade : undefined });
+          : await api.register({ email, password, name, role, grade: role === 'student' ? grade : undefined, gender: gender as 'm' | 'f' });
       await setToken(res.token);
       onAuth(res.user);
     } catch (e) {
@@ -46,6 +52,7 @@ export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { 
         <HeroPic hero={hero} pose="wave" size={110} />
         <View style={{ flex: 1 }}>
           <Title>{mode === 'login' ? 'С возвращением!' : 'Давай знакомиться!'}</Title>
+          {mode === 'register' && gender ? <Muted>Я {HERO_NAMES[hero]}, буду твоим помощником.</Muted> : null}
         </View>
       </Row>
       <Card>
@@ -57,6 +64,11 @@ export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { 
               ))}
             </Row>
             <Field label="Имя" value={name} onChangeText={setName} placeholder="Имя или псевдоним" />
+            <Muted>Пол</Muted>
+            <Row style={{ marginBottom: 12 }}>
+              <Chip label={role === 'student' ? '👦 Мальчик' : '👨 Мужской'} active={gender === 'm'} onPress={() => setGender('m')} />
+              <Chip label={role === 'student' ? '👧 Девочка' : '👩 Женский'} active={gender === 'f'} onPress={() => setGender('f')} />
+            </Row>
             {role === 'student' && (
               <>
                 <Muted>В каком ты классе?</Muted>

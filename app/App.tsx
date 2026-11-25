@@ -1,6 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
+import { setGuideUser } from './src/heroes';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import { api, loadToken, setToken, User } from './src/api';
 import './src/install';
 import AuthScreen from './src/screens/AuthScreen';
@@ -15,7 +18,25 @@ type View_ = { name: 'landing' } | { name: 'auth'; mode: 'login' | 'register' } 
 
 export default function App() {
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserRaw] = useState<User | null>(null);
+  const [tour, setTour] = useState(false);
+  const setUser = (u: User | null) => {
+    setGuideUser(u);
+    setUserRaw(u);
+  };
+  const checkTour = async (u: User) => {
+    try {
+      setTour((await AsyncStorage.getItem('onboarded_' + u.id)) !== '1');
+    } catch {
+      setTour(false);
+    }
+  };
+  const finishTour = async () => {
+    setTour(false);
+    try {
+      if (user) await AsyncStorage.setItem('onboarded_' + user.id, '1');
+    } catch {}
+  };
   const [view, setView] = useState<View_>({ name: 'landing' });
   const [back, setBack] = useState<View_>({ name: 'landing' });
 
@@ -24,7 +45,9 @@ export default function App() {
       const token = await loadToken();
       if (token) {
         try {
-          setUser(await api.me());
+          const me = await api.me();
+          setUser(me);
+          await checkTour(me);
         } catch {
           await setToken(null);
         }
@@ -56,16 +79,18 @@ export default function App() {
   } else if (!user) {
     body =
       view.name === 'auth' ? (
-        <AuthScreen onAuth={setUser} initialMode={view.mode} onBack={() => setView({ name: 'landing' })} />
+        <AuthScreen onAuth={(u) => { setUser(u); checkTour(u); }} initialMode={view.mode} onBack={() => setView({ name: 'landing' })} />
       ) : (
         <LandingScreen onStart={(mode) => setView({ name: 'auth', mode })} onInfo={showInfo} />
       );
+  } else if (tour) {
+    body = <OnboardingScreen user={user} onUser={setUser} onDone={finishTour} />;
   } else if (user.role === 'student') {
-    body = <StudentScreen user={user} onLogout={logout} onInfo={showInfo} />;
+    body = <StudentScreen user={user} onLogout={logout} onInfo={showInfo} onUser={setUser} onTour={() => setTour(true)} />;
   } else if (user.role === 'teacher') {
-    body = <TeacherScreen user={user} onLogout={logout} />;
+    body = <TeacherScreen user={user} onLogout={logout} onUser={setUser} onTour={() => setTour(true)} />;
   } else {
-    body = <ParentScreen user={user} onLogout={logout} />;
+    body = <ParentScreen user={user} onLogout={logout} onUser={setUser} onTour={() => setTour(true)} />;
   }
 
   return (

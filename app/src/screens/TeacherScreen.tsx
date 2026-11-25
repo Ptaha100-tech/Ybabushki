@@ -3,7 +3,7 @@ import { api, ClassDetail, ClassSummary, errMsg, Topic, User } from '../api';
 import TopicBrowser from '../TopicBrowser';
 import { Button, Card, Chip, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
-export default function TeacherScreen({ user, onLogout }: { user: User; onLogout: () => void }) {
+export default function TeacherScreen({ user, onLogout, onTour }: { user: User; onLogout: () => void; onUser?: (u: User) => void; onTour?: () => void }) {
   const [classes, setClasses] = useState<ClassSummary[]>([]);
   const [name, setName] = useState('');
   const [open, setOpen] = useState<string | null>(null);
@@ -56,6 +56,7 @@ export default function TeacherScreen({ user, onLogout }: { user: User; onLogout
         <Button title="Создать класс" onPress={create} disabled={!name.trim()} />
       </Card>
 
+      {onTour && <Button kind="secondary" title="Показать обучение" onPress={onTour} />}
       <Button kind="secondary" title="Выйти" onPress={onLogout} />
     </Screen>
   );

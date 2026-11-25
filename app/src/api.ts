@@ -16,6 +16,7 @@ export interface User {
   linkCode: string | null;
   classroomId: string | null;
   grade?: number | null;
+  gender?: 'm' | 'f' | null;
   xp: number;
   dayStreak: number;
 }
@@ -176,10 +177,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
-  register: (b: { email: string; password: string; name: string; role: Role; grade?: number }) =>
+  register: (b: { email: string; password: string; name: string; role: Role; grade?: number; gender: 'm' | 'f' }) =>
     request<{ token: string; user: User }>('POST', '/auth/register', b),
   login: (b: { email: string; password: string }) => request<{ token: string; user: User }>('POST', '/auth/login', b),
   me: () => request<User>('GET', '/auth/me'),
+  updateProfile: (b: { gender?: 'm' | 'f'; grade?: number }) =>
+    request<{ gender: 'm' | 'f' | null; grade: number | null }>('PATCH', '/me/profile', b),
 
   topics: () => request<Topic[]>('GET', '/topics'),
   catalog: () => request<Catalog>('GET', '/catalog'),

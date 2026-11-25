@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, errMsg, Stats, User } from '../api';
 import { Button, Card, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
-export default function ParentScreen({ user, onLogout }: { user: User; onLogout: () => void }) {
+export default function ParentScreen({ user, onLogout, onTour }: { user: User; onLogout: () => void; onUser?: (u: User) => void; onTour?: () => void }) {
   const [children, setChildren] = useState<Stats[]>([]);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -80,6 +80,7 @@ export default function ParentScreen({ user, onLogout }: { user: User; onLogout:
         <Button title="Добавить" onPress={link} disabled={!code.trim()} />
       </Card>
 
+      {onTour && <Button kind="secondary" title="Показать обучение" onPress={onTour} />}
       <Button kind="secondary" title="Выйти" onPress={onLogout} />
     </Screen>
   );
