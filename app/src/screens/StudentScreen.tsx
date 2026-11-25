@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg, HomeworkItem, Stats, Topic, User } from '../api';
 import { Emo, HeroPic, Icon, RichText } from '../Art';
 import { HERO_NAMES, useHero } from '../heroes';
+import EmailVerify from '../EmailVerify';
 import ProfileEditor from '../ProfileEditor';
 import InstallCard from '../InstallCard';
 import TopicBrowser from '../TopicBrowser';
@@ -167,6 +168,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
             </Muted>
           </Card>
 
+          <EmailVerify user={user} onUser={onUser} />
           <Heading>Мой помощник</Heading>
           <Card style={{ alignItems: 'center' }}>
             <HeroPic hero={hero} pose="wave" size={130} />

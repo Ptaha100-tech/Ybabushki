@@ -19,6 +19,7 @@ export function publicUser(u: User) {
     classroomId: u.classroomId,
     grade: u.grade,
     gender: u.gender,
+    emailVerified: u.emailVerified,
     xp: u.xp,
     dayStreak: u.dayStreak,
   };

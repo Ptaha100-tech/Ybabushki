@@ -1,10 +1,11 @@
+import EmailVerify from '../EmailVerify';
 import { RichText } from '../Art';
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ClassDetail, ClassSummary, errMsg, Topic, User } from '../api';
 import TopicBrowser from '../TopicBrowser';
 import { Button, Card, Chip, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
-export default function TeacherScreen({ user, onLogout, onTour }: { user: User; onLogout: () => void; onUser?: (u: User) => void; onTour?: () => void }) {
+export default function TeacherScreen({ user, onLogout, onTour, onUser }: { user: User; onLogout: () => void; onUser?: (u: User) => void; onTour?: () => void }) {
   const [classes, setClasses] = useState<ClassSummary[]>([]);
   const [name, setName] = useState('');
   const [open, setOpen] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export default function TeacherScreen({ user, onLogout, onTour }: { user: User; 
         <Button title="Создать класс" onPress={create} disabled={!name.trim()} />
       </Card>
 
+      {onUser && <EmailVerify user={user} onUser={onUser} />}
       {onTour && <Button kind="secondary" title="Показать обучение" onPress={onTour} />}
       <Button kind="secondary" title="Выйти" onPress={onLogout} />
     </Screen>

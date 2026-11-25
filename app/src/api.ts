@@ -17,6 +17,7 @@ export interface User {
   classroomId: string | null;
   grade?: number | null;
   gender?: 'm' | 'f' | null;
+  emailVerified?: boolean;
   xp: number;
   dayStreak: number;
 }
@@ -177,8 +178,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
-  register: (b: { email: string; password: string; name: string; role: Role; grade?: number; gender: 'm' | 'f' }) =>
+  register: (b: { email: string; password: string; name: string; role: Role; grade?: number; gender: 'm' | 'f'; consent: boolean }) =>
     request<{ token: string; user: User }>('POST', '/auth/register', b),
+  forgot: (email: string) => request<{ ok: boolean; mail: boolean }>('POST', '/auth/forgot', { email }),
+  reset: (b: { email: string; code: string; password: string }) => request<{ token: string; user: User }>('POST', '/auth/reset', b),
+  verifySend: () => request<{ ok: boolean; mail: boolean }>('POST', '/auth/verify/send'),
+  verify: (code: string) => request<User>('POST', '/auth/verify', { code }),
   login: (b: { email: string; password: string }) => request<{ token: string; user: User }>('POST', '/auth/login', b),
   me: () => request<User>('GET', '/auth/me'),
   updateProfile: (b: { gender?: 'm' | 'f'; grade?: number }) =>

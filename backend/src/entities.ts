@@ -16,6 +16,16 @@ export class User {
   @Column({ type: 'int', nullable: true }) grade: number | null;
   /** 'm' | 'f' — нужен, чтобы выбрать ведущего обучение героя. */
   @Column({ type: 'varchar', length: 1, nullable: true }) gender: string | null;
+  @Column({ type: 'boolean', default: false }) emailVerified: boolean;
+  /** Когда пользователь принял политику и условия. */
+  @Column({ type: 'timestamp', nullable: true }) consentAt: Date | null;
+  /** Одноразовые коды (хранятся хешем): 'reset' — сброс пароля, 'verify' — подтверждение почты. */
+  @Column({ type: 'varchar', nullable: true }) resetHash: string | null;
+  @Column({ type: 'timestamp', nullable: true }) resetExpires: Date | null;
+  @Column({ type: 'int', default: 0 }) resetAttempts: number;
+  @Column({ type: 'varchar', nullable: true }) verifyHash: string | null;
+  @Column({ type: 'timestamp', nullable: true }) verifyExpires: Date | null;
+  @Column({ type: 'int', default: 0 }) verifyAttempts: number;
   @Column({ type: 'int', default: 0 }) xp: number;
   @Column({ type: 'int', default: 0 }) dayStreak: number;
   @Column({ type: 'date', nullable: true }) lastActiveDate: string | null;

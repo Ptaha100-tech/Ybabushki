@@ -27,6 +27,11 @@ services:
       FREE_DAILY_LIMIT: ${FREE_DAILY_LIMIT:-20}
       PAYMENTS_MODE: ${PAYMENTS_MODE:-mock}
       DB_SYNC: ${DB_SYNC:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
 
   web:
     build:

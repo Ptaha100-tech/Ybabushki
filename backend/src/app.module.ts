@@ -13,6 +13,7 @@ import { LearningController } from './learning/learning.controller';
 import { LearningService } from './learning/learning.service';
 import { ParentController } from './parent/parent.controller';
 import { ParentService } from './parent/parent.service';
+import { MailerService } from './mailer.service';
 import { SeedService } from './seed.service';
 import { SubscriptionsService } from './subscriptions.service';
 
@@ -43,6 +44,6 @@ class HealthController {
     JwtModule.register({ global: true, secret: jwtSecret, signOptions: { expiresIn: '30d' } }),
   ],
   controllers: [HealthController, AuthController, LearningController, GamesController, ClassesController, ParentController],
-  providers: [AuthService, AuthGuard, LearningService, GamesService, ClassesService, ParentService, SubscriptionsService, SeedService],
+  providers: [AuthService, AuthGuard, LearningService, GamesService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService],
 })
 export class AppModule {}
