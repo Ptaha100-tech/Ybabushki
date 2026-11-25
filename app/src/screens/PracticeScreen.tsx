@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AnswerResult, api, ApiError, errMsg, NextTask, Topic } from '../api';
-import { HeroPic } from '../Art';
+import { HeroPic, RichText } from '../Art';
 import { useHero } from '../heroes';
 import { Button, Card, colors, ErrorText, Field, Muted, Row, Screen, Title } from '../ui';
 
@@ -78,9 +78,7 @@ export default function PracticeScreen({
   return (
     <Screen>
       <Button kind="secondary" title="← К темам" onPress={onClose} />
-      <Title>
-        {topic.icon ?? '📘'} {topic.title}
-      </Title>
+      <Title>{topic.title}</Title>
       {done > 0 && (
         <Muted>
           Сегодня в этой теме: {right} из {done} верно
@@ -239,7 +237,7 @@ export default function PracticeScreen({
               }}
             >
               {result.correct ? (
-                <Text style={[s.resultTitle, { color: colors.good }]}>Верно! 🎉 +10 XP</Text>
+                <RichText style={[s.resultTitle, { color: colors.good }]}>Верно! 🎉 +10 XP</RichText>
               ) : (
                 <>
                   <Text style={[s.resultTitle, { color: colors.bad }]}>Неверно. Правильный ответ: {result.correctAnswer}</Text>
@@ -249,12 +247,10 @@ export default function PracticeScreen({
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <HeroPic hero={hero} pose={result.correct ? 'thumbs' : 'think'} size={86} />
                 <View style={{ flex: 1 }}>
-                  {result.explanation ? <Text style={s.explain}>💡 {result.explanation}</Text> : null}
+                  {result.explanation ? <RichText style={s.explain}>💡 {result.explanation}</RichText> : null}
                 </View>
               </View>
-              <Muted>
-                ⭐ {result.xp} XP · 🔥 {result.dayStreak} дн.
-              </Muted>
+              <Muted>⭐ {result.xp} XP · 🔥 {result.dayStreak} дн.</Muted>
               <Button title="Дальше" onPress={() => fetchNext(task.id)} />
             </Card>
           )}

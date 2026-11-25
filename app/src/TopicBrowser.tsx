@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SubjectIcon } from './Art';
 import { api, Catalog, errMsg, Topic } from './api';
 import { Card, Chip, colors, ErrorText, Muted, Row } from './ui';
 
@@ -81,7 +82,7 @@ export default function TopicBrowser({
         return (
           <Pressable key={t.id} onPress={() => onPick(t)}>
             <Card style={[s.topic, { borderLeftColor: m?.color ?? colors.primary }, active && { backgroundColor: '#E6F3FD', borderColor: colors.primary }]}>
-              <Text style={s.icon}>{t.icon ?? m?.emoji ?? '📘'}</Text>
+              <View style={{ marginRight: 10 }}><SubjectIcon title={m?.title} fallback={m?.emoji} size={38} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={s.title}>{t.title}</Text>
                 <Text style={s.sub}>

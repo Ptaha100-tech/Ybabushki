@@ -1,3 +1,4 @@
+import { RichText } from './Art';
 import React from 'react';
 import {
   Pressable,
@@ -39,15 +40,15 @@ export function Screen({ children }: { children: React.ReactNode }) {
 }
 
 export function Title({ children }: { children: React.ReactNode }) {
-  return <Text style={s.title}>{children}</Text>;
+  return <RichText style={s.title}>{children}</RichText>;
 }
 
 export function Heading({ children }: { children: React.ReactNode }) {
-  return <Text style={s.heading}>{children}</Text>;
+  return <RichText style={s.heading}>{children}</RichText>;
 }
 
 export function Muted({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[s.muted, style]}>{children}</Text>;
+  return <RichText style={[s.muted, style]}>{children}</RichText>;
 }
 
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -84,7 +85,7 @@ export function Button({
 export function Chip({ label, active, onPress }: { label: string; active?: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={[s.chip, active && s.chipActive]}>
-      <Text style={[s.chipText, active && { color: '#fff' }]}>{label}</Text>
+      <RichText style={[s.chipText, active && { color: '#fff' }]}>{label}</RichText>
     </Pressable>
   );
 }

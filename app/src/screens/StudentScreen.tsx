@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg, HomeworkItem, Stats, Topic, User } from '../api';
-import { HeroPic, Icon } from '../Art';
+import { Emo, HeroPic, Icon, RichText } from '../Art';
 import { HERO_NAMES, useHero } from '../heroes';
 import ProfileEditor from '../ProfileEditor';
 import InstallCard from '../InstallCard';
@@ -82,13 +82,13 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
             </View>
           </View>
           <View style={s.xpPill}>
-            <Text style={s.xpPillText}>⭐ {stats?.xp ?? user.xp}</Text>
+            <RichText style={s.xpPillText}>⭐ {stats?.xp ?? user.xp}</RichText>
           </View>
         </Row>
         <View style={s.barHead}>
           <View style={[s.barHeadFill, { width: `${stats?.progress ?? 0}%` }]} />
         </View>
-        <Text style={s.lvl}>🔥 серия {stats?.dayStreak ?? 0} дн.</Text>
+        <RichText style={s.lvl}>🔥 серия {stats?.dayStreak ?? 0} дн.</RichText>
       </View>
 
       <ErrorText text={error} />
@@ -136,11 +136,11 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
             board.rows.map((r, i) => (
               <Card key={`${r.name}-${i}`} style={r.me ? { borderColor: colors.primary, backgroundColor: '#E6F3FD' } : undefined}>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Text style={s.hwTitle}>
+                  <RichText style={s.hwTitle}>
                     {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`} {r.name}
                     {r.me ? ' (вы)' : ''}
-                  </Text>
-                  <Text style={s.xp}>⭐ {r.xp}</Text>
+                  </RichText>
+                  <RichText style={s.xp}>⭐ {r.xp}</RichText>
                 </Row>
               </Card>
             ))
@@ -182,7 +182,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
           <Row style={{ marginBottom: 8 }}>
             {(stats.badges ?? []).map((b) => (
               <View key={b.id} style={[s.badge, !b.earned && { opacity: 0.35 }]}>
-                <Text style={{ fontSize: 28 }}>{b.emoji}</Text>
+                <Emo e={b.emoji} size={46} />
                 <Text style={s.badgeTitle}>{b.title}</Text>
                 <Text style={s.badgeText}>{b.text}</Text>
               </View>
@@ -213,7 +213,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
         const active = tab === k;
         return (
           <Pressable key={k} onPress={() => setTab(k)} style={[s.navItem, active && s.navActive]}>
-            <Text style={{ fontSize: 20 }}>{e}</Text>
+            <Emo e={e} size={32} />
             {active && <Text style={s.navLabel}>{label}</Text>}
           </Pressable>
         );

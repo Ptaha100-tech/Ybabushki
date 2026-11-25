@@ -1,3 +1,4 @@
+import { RichText } from '../Art';
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, errMsg, Stats, User } from '../api';
 import { Button, Card, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';

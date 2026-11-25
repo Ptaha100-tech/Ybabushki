@@ -1,3 +1,4 @@
+import { RichText } from '../Art';
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ClassDetail, ClassSummary, errMsg, Topic, User } from '../api';
 import TopicBrowser from '../TopicBrowser';

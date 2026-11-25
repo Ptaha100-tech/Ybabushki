@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api, errMsg, LightningTask, SubjectMeta } from '../api';
-import { HeroPic, Icon, Scene } from '../Art';
+import { HeroPic, Icon, Scene, RichText } from '../Art';
 import { useHero } from '../heroes';
 import { Button, Card, Chip, colors, ErrorText, Heading, Muted, Row, Screen, Title } from '../ui';
 
@@ -128,8 +128,8 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
     <Screen>
       <Row style={{ justifyContent: 'space-between' }}>
         <Text style={s.timer}>⏱ {time}</Text>
-        <Text style={s.timer}>🔥 x{combo}</Text>
-        <Text style={s.timer}>⭐ {score}</Text>
+        <RichText style={s.timer}>🔥 x{combo}</RichText>
+        <RichText style={s.timer}>⭐ {score}</RichText>
       </Row>
       <Card style={flash === 'good' ? { backgroundColor: colors.goodBg } : flash === 'bad' ? { backgroundColor: colors.badBg } : undefined}>
         <Text style={s.q}>{task?.prompt}</Text>
@@ -240,7 +240,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
           const shown = open.includes(i) || found.has(c.pair);
           return (
             <Pressable key={c.key} onPress={() => flip(i)} style={[s.memCard, shown && s.memShown, found.has(c.pair) && { backgroundColor: colors.goodBg, borderColor: colors.good }]}>
-              <Text style={[s.memText, !shown && { fontSize: 28 }]}>{shown ? c.text : '❓'}</Text>
+              <RichText style={[s.memText, !shown && { fontSize: 28 }]}>{shown ? c.text : '❓'}</RichText>
             </Pressable>
           );
         })}
@@ -248,7 +248,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
       {finished && (
         <Card>
           <Scene name="jump" width={200} ratio={1.09} />
-          <Text style={s.big}>Все пары найдены! 🎉</Text>
+          <RichText style={s.big}>Все пары найдены! 🎉</RichText>
           <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
           <Button title="Закрыть" onPress={onClose} />
         </Card>

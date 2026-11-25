@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { HeroPic, Scene } from '../Art';
+import { HeroPic, Scene, RichText } from '../Art';
 import { HERO_NAMES, Pose, useHero } from '../heroes';
 import ProfileEditor from '../ProfileEditor';
 import { User } from '../api';
@@ -77,7 +77,7 @@ export default function OnboardingScreen({ user, onUser, onDone }: { user: User;
 
       <Card style={s.bubble}>
         <Text style={s.title}>{fill(step.title)}</Text>
-        <Text style={s.text}>{fill(step.text)}</Text>
+        <RichText style={s.text}>{fill(step.text)}</RichText>
         {step.profile ? <ProfileEditor user={user} onChange={onUser} /> : null}
         {blocked && <Muted>Выберите пол, чтобы продолжить.</Muted>}
       </Card>
