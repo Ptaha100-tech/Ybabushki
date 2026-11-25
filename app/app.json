@@ -10,7 +10,12 @@
       "bundleIdentifier": "ru.myschool51.app"
     },
     "android": {
-      "package": "ru.myschool51.app"
+      "package": "ru.myschool51.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#339DDA"
+      },
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -19,6 +24,12 @@
       "shortName": "Моя школа",
       "backgroundColor": "#F3F9FE",
       "themeColor": "#339DDA"
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#339DDA"
     }
   }
 }

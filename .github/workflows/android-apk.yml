@@ -3,6 +3,11 @@ name: Сборка Android APK
 # Запуск вручную: вкладка Actions → «Сборка Android APK» → Run workflow.
 # Готовый APK появится в Releases (тег apk-latest) и в артефактах запуска.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/android-apk.yml'
   workflow_dispatch:
     inputs:
       api_url:
@@ -11,6 +16,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: apk
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -33,12 +42,12 @@ jobs:
       - name: Генерация Android-проекта
         working-directory: app
         env:
-          EXPO_PUBLIC_API_URL: ${{ inputs.api_url }}
+          EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://my-school-51.ru/api' }}
         run: npx expo prebuild --platform android --no-install
       - name: Сборка APK
         working-directory: app/android
         env:
-          EXPO_PUBLIC_API_URL: ${{ inputs.api_url }}
+          EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://my-school-51.ru/api' }}
         run: ./gradlew assembleRelease --no-daemon
       - name: Переименование
         run: cp app/android/app/build/outputs/apk/release/app-release.apk moya-shkola.apk

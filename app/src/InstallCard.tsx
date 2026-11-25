@@ -37,7 +37,14 @@ export default function InstallCard() {
           Откройте этот сайт на телефоне, чтобы установить приложение. В Chrome на компьютере значок установки есть в адресной строке.
         </Text>
       )}
-      {apk && kind !== 'ios' && <Button kind="secondary" title="Скачать APK для Android" onPress={() => Linking.openURL(APK_PATH)} />}
+      {apk && kind !== 'ios' && (
+        <>
+          <Button title="⬇️ Скачать приложение для Android (APK)" onPress={() => Linking.openURL(APK_PATH)} />
+          <Muted>
+            После скачивания откройте файл и разрешите установку из этого источника (Android спросит один раз). Это обычное приложение, магазин не нужен.
+          </Muted>
+        </>
+      )}
     </Card>
   );
 }
