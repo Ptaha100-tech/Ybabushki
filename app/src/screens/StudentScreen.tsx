@@ -156,7 +156,8 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
             ))}
           </Row>
 
-          <Heading>Вступить в класс</Heading>
+          <Heading>Вступить в класс (по желанию)</Heading>
+          <Muted>Занимайтесь и без класса. Код нужен, только если учитель дал вам его для домашних заданий.</Muted>
           <Card>
             <Field label="Код от учителя" value={code} onChangeText={setCode} autoCapitalize="characters" placeholder="ABC123" />
             <InfoText text={info} />

@@ -21,6 +21,7 @@ export interface User {
 }
 export interface Topic {
   id: string;
+  slug?: string | null;
   title: string;
   grade: number;
   subject: string;

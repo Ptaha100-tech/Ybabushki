@@ -21,6 +21,7 @@ export default function TopicBrowser({
   const [error, setError] = useState('');
   const [subject, setSubject] = useState<string | null>(subjectFilter ?? null);
   const [grade, setGrade] = useState<number | null>(initialGrade ?? null);
+  const [kind, setKind] = useState<'all' | 'regular' | 'vpr' | 'oge' | 'ege'>('all');
 
   useEffect(() => {
     api.catalog().then(setCat).catch((e) => setError(errMsg(e)));
@@ -32,13 +33,13 @@ export default function TopicBrowser({
 
   const subjects = useMemo(() => {
     if (!cat) return [];
-    return cat.subjects.filter((s) => cat.topics.some((t) => t.subject === s.key && (grade === null || t.grade === grade)));
-  }, [cat, grade]);
+    return cat.subjects.filter((s) => cat.topics.some((t) => t.subject === s.key && (grade === null || t.grade === grade) && (kind === 'all' || examKind(t) === kind)));
+  }, [cat, grade, kind]);
 
   const list = useMemo(() => {
     if (!cat) return [];
-    return cat.topics.filter((t) => (!subject || t.subject === subject) && (grade === null || t.grade === grade));
-  }, [cat, subject, grade]);
+    return cat.topics.filter((t) => (!subject || t.subject === subject) && (grade === null || t.grade === grade) && (kind === 'all' || examKind(t) === kind));
+  }, [cat, subject, grade, kind]);
 
   if (error) return <ErrorText text={error} />;
   if (!cat) return <ActivityIndicator size="large" color={colors.primary} />;
@@ -47,6 +48,14 @@ export default function TopicBrowser({
 
   return (
     <View>
+      <Muted>Что нужно</Muted>
+      <Row style={{ marginBottom: 10 }}>
+        <Chip label="Все темы" active={kind === 'all'} onPress={() => setKind('all')} />
+        <Chip label="📘 По программе" active={kind === 'regular'} onPress={() => setKind('regular')} />
+        <Chip label="🎯 ВПР" active={kind === 'vpr'} onPress={() => setKind('vpr')} />
+        <Chip label="🎓 ОГЭ" active={kind === 'oge'} onPress={() => setKind('oge')} />
+        <Chip label="🏁 ЕГЭ" active={kind === 'ege'} onPress={() => setKind('ege')} />
+      </Row>
       <Muted>Класс</Muted>
       <Row style={{ marginBottom: 10 }}>
         <Chip label="Все" active={grade === null} onPress={() => setGrade(null)} />
@@ -86,6 +95,14 @@ export default function TopicBrowser({
       })}
     </View>
   );
+}
+
+function examKind(t: Topic): 'regular' | 'vpr' | 'oge' | 'ege' {
+  const p = t.slug ?? '';
+  if (p.startsWith('vpr-')) return 'vpr';
+  if (p.startsWith('oge-')) return 'oge';
+  if (p.startsWith('ege-')) return 'ege';
+  return 'regular';
 }
 
 const s = StyleSheet.create({

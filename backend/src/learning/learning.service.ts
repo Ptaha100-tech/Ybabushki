@@ -41,7 +41,7 @@ export class LearningService {
       grade: user?.grade ?? null,
       subjects: SUBJECTS,
       topics: topics.map((t) => ({
-        id: t.id, title: t.title, grade: t.grade, subject: t.subject, icon: t.icon,
+        id: t.id, slug: t.slug, title: t.title, grade: t.grade, subject: t.subject, icon: t.icon,
         tasks: nMap.get(t.id) ?? 0, level: pMap.get(t.id) ?? null,
       })),
     };

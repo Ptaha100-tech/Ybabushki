@@ -4,12 +4,12 @@ import { Diff, TaskSeed, TopicSeed } from './types';
 
 type Make = (r: Rng, d: Diff) => Omit<TaskSeed, 'difficulty'> | null;
 
-const pick2 = <T,>(r: Rng, a: T[]) => a[r.int(0, a.length - 1)];
-const fmt = (n: number) => String(Math.round(n * 1e6) / 1e6).replace('.', ',');
+export const pick2 = <T,>(r: Rng, a: T[]) => a[r.int(0, a.length - 1)];
+export const fmt = (n: number) => String(Math.round(n * 1e6) / 1e6).replace('.', ',');
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
 
 /** Числовой ответ с проверкой по выражению. */
-function calc(r: Rng, text: string, expr: string, ex: Extra = {}, chance = 0.35) {
+export function calc(r: Rng, text: string, expr: string, ex: Extra = {}, chance = 0.35) {
   // eslint-disable-next-line no-new-func
   const v = new Function(`return (${expr});`)() as number;
   return numOrChoice(r, text, v, { expr, ...ex }, chance);
@@ -157,7 +157,7 @@ const g4: TopicSeed[] = [
   }),
 ];
 
-const frac = (a: number, b: number) => { const g = gcd(a, b); return b / g === 1 ? String(a / g) : `${a / g}/${b / g}`; };
+export const frac = (a: number, b: number) => { const g = gcd(a, b); return b / g === 1 ? String(a / g) : `${a / g}/${b / g}`; };
 
 const g5: TopicSeed[] = [
   T('math-5-fractions', 5, 'Обыкновенные дроби', '🍕', 5, (r, d) => {
