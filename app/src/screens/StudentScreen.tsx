@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg, HomeworkItem, Stats, Topic, User } from '../api';
 import InstallCard from '../InstallCard';
 import TopicBrowser from '../TopicBrowser';
@@ -56,21 +56,36 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
   if (practice) return <PracticeScreen topic={practice.topic} homeworkId={practice.homeworkId} onClose={() => setPractice(null)} />;
   if (tab === 'games') return <GamesScreen grade={stats?.grade ?? user.grade} onClose={() => { setTab('learn'); load(); }} />;
 
-  return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title>
-          {stats?.avatar ?? '🐣'} {user.name}
-        </Title>
-        <Text style={s.xp}>⭐ {stats?.xp ?? user.xp}</Text>
-      </Row>
+  const NAV: [Tab, string, string][] = [
+    ['learn', '📚', 'Учёба'],
+    ['games', '🎮', 'Игры'],
+    ['rating', '🏆', 'Рейтинг'],
+    ['me', '👤', 'Профиль'],
+  ];
 
-      <Row style={{ marginBottom: 12 }}>
-        <Chip label="📚 Учиться" active={tab === 'learn'} onPress={() => setTab('learn')} />
-        <Chip label="🎮 Игры" active={false} onPress={() => setTab('games')} />
-        <Chip label="🏆 Рейтинг" active={tab === 'rating'} onPress={() => setTab('rating')} />
-        <Chip label="👤 Профиль" active={tab === 'me'} onPress={() => setTab('me')} />
-      </Row>
+  return (
+    <View style={{ flex: 1 }}>
+    <Screen>
+      <View style={s.head}>
+        <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+            <View style={s.avatar}>
+              <Text style={{ fontSize: 30 }}>{stats?.avatar ?? '🐣'}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.hello}>Привет, {user.name}!</Text>
+              <Text style={s.lvl}>{stats ? `Уровень ${stats.level} · ${stats.title}` : ' '}</Text>
+            </View>
+          </View>
+          <View style={s.xpPill}>
+            <Text style={s.xpPillText}>⭐ {stats?.xp ?? user.xp}</Text>
+          </View>
+        </Row>
+        <View style={s.barHead}>
+          <View style={[s.barHeadFill, { width: `${stats?.progress ?? 0}%` }]} />
+        </View>
+        <Text style={s.lvl}>🔥 серия {stats?.dayStreak ?? 0} дн.</Text>
+      </View>
 
       <ErrorText text={error} />
 
@@ -112,7 +127,7 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
             </Card>
           ) : (
             board.rows.map((r, i) => (
-              <Card key={`${r.name}-${i}`} style={r.me ? { borderColor: colors.primary, backgroundColor: '#EEF2FF' } : undefined}>
+              <Card key={`${r.name}-${i}`} style={r.me ? { borderColor: colors.primary, backgroundColor: '#E6F3FD' } : undefined}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <Text style={s.hwTitle}>
                     {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`} {r.name}
@@ -173,11 +188,36 @@ export default function StudentScreen({ user, onLogout, onInfo }: { user: User; 
           <Button kind="secondary" title="Выйти" onPress={onLogout} />
         </>
       )}
+      <View style={{ height: 96 }} />
     </Screen>
+    <View style={s.nav}>
+      {NAV.map(([k, e, label]) => {
+        const active = tab === k;
+        return (
+          <Pressable key={k} onPress={() => setTab(k)} style={[s.navItem, active && s.navActive]}>
+            <Text style={{ fontSize: 20 }}>{e}</Text>
+            {active && <Text style={s.navLabel}>{label}</Text>}
+          </Pressable>
+        );
+      })}
+    </View>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
+  head: { backgroundColor: colors.primary, borderRadius: 28, padding: 18, marginBottom: 14 },
+  avatar: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  hello: { fontSize: 19, fontWeight: '800', color: '#fff' },
+  lvl: { fontSize: 13, color: 'rgba(255,255,255,0.92)' },
+  xpPill: { backgroundColor: '#fff', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
+  xpPillText: { fontWeight: '800', color: colors.cta },
+  barHead: { height: 10, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 5, marginVertical: 12, overflow: 'hidden' },
+  barHeadFill: { height: 10, backgroundColor: '#fff', borderRadius: 5 },
+  nav: { position: 'absolute', left: 16, right: 16, bottom: 14, backgroundColor: colors.dark, borderRadius: 999, padding: 6, flexDirection: 'row', justifyContent: 'space-around', maxWidth: 460, alignSelf: 'center', width: '92%' },
+  navItem: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999 },
+  navActive: { backgroundColor: colors.primary },
+  navLabel: { color: '#fff', fontWeight: '700', fontSize: 13 },
   xp: { fontSize: 18, fontWeight: '800', color: colors.accent },
   hwTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   big: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 8 },

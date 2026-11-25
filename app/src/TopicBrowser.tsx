@@ -80,7 +80,7 @@ export default function TopicBrowser({
         const active = selectedId === t.id;
         return (
           <Pressable key={t.id} onPress={() => onPick(t)}>
-            <Card style={[s.topic, { borderLeftColor: m?.color ?? colors.primary }, active && { backgroundColor: '#EEF2FF', borderColor: colors.primary }]}>
+            <Card style={[s.topic, { borderLeftColor: m?.color ?? colors.primary }, active && { backgroundColor: '#E6F3FD', borderColor: colors.primary }]}>
               <Text style={s.icon}>{t.icon ?? m?.emoji ?? '📘'}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={s.title}>{t.title}</Text>

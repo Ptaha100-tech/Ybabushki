@@ -259,7 +259,7 @@ const s = StyleSheet.create({
   numInput: { borderWidth: 2, borderColor: colors.border, borderRadius: 12, padding: 12, fontSize: 24, textAlign: 'center', marginBottom: 8, color: colors.text, backgroundColor: '#fff' },
   big: { fontSize: 30, fontWeight: '800', color: colors.primary, marginBottom: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginVertical: 12 },
-  memCard: { width: '47%', minHeight: 84, borderRadius: 12, borderWidth: 2, borderColor: colors.border, backgroundColor: '#E0E7FF', alignItems: 'center', justifyContent: 'center', padding: 8 },
+  memCard: { width: '47%', minHeight: 84, borderRadius: 12, borderWidth: 2, borderColor: colors.border, backgroundColor: '#CFE8F9', alignItems: 'center', justifyContent: 'center', padding: 8 },
   memShown: { backgroundColor: '#fff', borderColor: colors.primary },
   memText: { fontSize: 15, fontWeight: '700', textAlign: 'center', color: colors.text },
 });

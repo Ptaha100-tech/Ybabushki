@@ -153,7 +153,7 @@ export default function PracticeScreen({
           {task.type === 'order' && task.items && (
             <>
               <Muted>Нажимай элементы по порядку. Нажми на выбранный, чтобы убрать.</Muted>
-              <Row style={{ minHeight: 48, marginBottom: 10, padding: 8, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: '#FAFAFF' }}>
+              <Row style={{ minHeight: 48, marginBottom: 10, padding: 8, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: '#F3F9FE' }}>
                 {order.length === 0 && <Muted>Здесь появится ответ…</Muted>}
                 {order.map((it, i) => (
                   <Pressable key={`${it}-${i}`} disabled={!!result} onPress={() => setOrder(order.filter((_, k) => k !== i))} style={s.tokenPicked}>
@@ -189,7 +189,7 @@ export default function PracticeScreen({
                 const chosen = pairs[l];
                 const isRightPair = !!result && result.correct;
                 return (
-                  <Pressable key={l} disabled={!!result} onPress={() => setActiveLeft(l === activeLeft ? null : l)} style={[s.matchLeft, activeLeft === l && { borderColor: colors.primary, backgroundColor: '#EEF2FF' }, isRightPair && s.optGood]}>
+                  <Pressable key={l} disabled={!!result} onPress={() => setActiveLeft(l === activeLeft ? null : l)} style={[s.matchLeft, activeLeft === l && { borderColor: colors.primary, backgroundColor: '#E6F3FD' }, isRightPair && s.optGood]}>
                     <Text style={s.tokenText}>{l}</Text>
                     <Text style={[s.tokenText, { color: colors.primary, fontWeight: '800' }]}>{chosen ? `→ ${chosen}` : '→ ?'}</Text>
                   </Pressable>
@@ -272,7 +272,7 @@ const s = StyleSheet.create({
   optBad: { backgroundColor: colors.badBg, borderColor: colors.bad },
   optionText: { fontSize: 18, fontWeight: '700', textAlign: 'center', color: colors.text },
   token: { borderWidth: 2, borderColor: colors.border, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#fff' },
-  tokenPicked: { borderWidth: 2, borderColor: colors.primary, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#EEF2FF' },
+  tokenPicked: { borderWidth: 2, borderColor: colors.primary, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#E6F3FD' },
   tokenText: { fontSize: 16, fontWeight: '600', color: colors.text },
   matchLeft: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, borderWidth: 2, borderColor: colors.border, borderRadius: 10, padding: 12, marginVertical: 4, backgroundColor: '#fff' },
   resultTitle: { fontSize: 18, fontWeight: '800', marginBottom: 6 },
