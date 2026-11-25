@@ -1,0 +1,41 @@
+name: Проверка кода
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', 'app/**', '.github/workflows/check.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Установка
+        working-directory: backend
+        run: npm install --no-audit --no-fund
+      - name: Сборка бэкенда
+        working-directory: backend
+        run: npx nest build
+      - name: Проверка банка заданий
+        run: bash scripts/check-content.sh
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Установка
+        working-directory: app
+        run: npm install --no-audit --no-fund
+      - name: Проверка типов
+        working-directory: app
+        run: npx tsc --noEmit
