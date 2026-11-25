@@ -12,7 +12,7 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'parent', label: 'Я родитель' },
 ];
 
-export default function AuthScreen({ onAuth, initialMode = 'login', onBack, onInfo }: { onAuth: (u: User) => void; initialMode?: 'login' | 'register'; onBack?: () => void }) {
+export default function AuthScreen({ onAuth, initialMode = 'login', onBack }: { onAuth: (u: User) => void; initialMode?: 'login' | 'register'; onBack?: () => void }) {
   const [infoKind, setInfoKind] = useState<'privacy' | 'terms' | null>(null);
   const [consent, setConsent] = useState(false);
   const [forgot, setForgot] = useState<'' | 'ask' | 'code'>('');
