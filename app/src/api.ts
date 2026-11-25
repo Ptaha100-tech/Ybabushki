@@ -8,6 +8,9 @@ const BASE = (process.env.EXPO_PUBLIC_API_URL ?? '/api').replace(/\/$/, '');
 
 export type Role = 'student' | 'teacher' | 'parent';
 
+export interface LeaderRow { name: string; xp: number; me: boolean }
+export interface Leaderboard { classroom: boolean; rows: LeaderRow[]; weekRows: LeaderRow[]; myWeekXp: number }
+
 export interface User {
   id: string;
   email: string;
@@ -206,7 +209,8 @@ export const api = {
   gameResult: (game: 'lightning' | 'memory', score: number) =>
     request<{ xp: number; totalXp: number; dailyCapReached: boolean }>('POST', '/games/result', { game, score }),
   leaderboard: () =>
-    request<{ classroom: boolean; rows: { name: string; xp: number; me: boolean }[] }>('GET', '/me/leaderboard'),
+    request<Leaderboard>('GET', '/me/leaderboard'),
+  weakTopics: () => request<(Topic & { total: number; accuracy: number })[]>('GET', '/me/weak'),
   nextTask: (topicId: string, homeworkId?: string, exclude?: string) => {
     const q = new URLSearchParams();
     if (homeworkId) q.set('homeworkId', homeworkId);

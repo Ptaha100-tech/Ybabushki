@@ -177,6 +177,32 @@ export class LearningService {
     };
   }
 
+  /** Темы, где у ученика больше всего ошибок (не меньше 5 ответов и точность ниже 75%). */
+  async weakTopics(userId: string) {
+    const rows: { id: string; title: string; grade: number; subject: string; icon: string | null; slug: string | null; n: string; c: string }[] =
+      await this.attempts.query(
+        `SELECT t.id, t.title, t.grade, t.subject, t.icon, t.slug, COUNT(*)::text AS n, SUM(CASE WHEN a.correct THEN 1 ELSE 0 END)::text AS c
+         FROM attempts a JOIN topics t ON t.id = a."topicId"
+         WHERE a."userId" = $1
+         GROUP BY t.id
+         HAVING COUNT(*) >= 5 AND SUM(CASE WHEN a.correct THEN 1 ELSE 0 END)::float / COUNT(*) < 0.75
+         ORDER BY SUM(CASE WHEN a.correct THEN 1 ELSE 0 END)::float / COUNT(*) ASC, COUNT(*) DESC
+         LIMIT 5`,
+        [userId],
+      );
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      grade: r.grade,
+      subject: r.subject,
+      icon: r.icon,
+      slug: r.slug,
+      position: 0,
+      total: Number(r.n),
+      accuracy: Math.round((Number(r.c) / Number(r.n)) * 100),
+    }));
+  }
+
   async myHomework(userId: string) {
     const user = await this.users.findOneOrFail({ where: { id: userId } });
     if (!user.classroomId) return [];

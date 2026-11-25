@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { api, errMsg, HomeworkItem, Stats, Topic, User } from '../api';
+import { api, errMsg, HomeworkItem, Leaderboard, Stats, Topic, User } from '../api';
 import { Emo, HeroPic, Icon, RichText } from '../Art';
 import { HERO_NAMES, useHero } from '../heroes';
 import EmailVerify from '../EmailVerify';
@@ -23,13 +23,16 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
-  const [board, setBoard] = useState<{ classroom: boolean; rows: { name: string; xp: number; me: boolean }[] } | null>(null);
+  const [board, setBoard] = useState<Leaderboard | null>(null);
+  const [period, setPeriod] = useState<'week' | 'all'>('week');
+  const [weak, setWeak] = useState<(Topic & { total: number; accuracy: number })[]>([]);
   const [hwTopics, setHwTopics] = useState<Topic[]>([]);
 
   const load = useCallback(async () => {
     try {
-      const [s, h, c] = await Promise.all([api.stats(), api.myHomework(), api.catalog()]);
+      const [s, h, c, w] = await Promise.all([api.stats(), api.myHomework(), api.catalog(), api.weakTopics().catch(() => [])]);
       setStats(s);
+      setWeak(w);
       setHomework(h);
       setHwTopics(c.topics);
     } catch (e) {
@@ -101,6 +104,23 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
               {stats.remaining === null ? '♾️ Безлимитные занятия включены' : `Бесплатных заданий сегодня осталось: ${stats.remaining}`} · 🔥 серия {stats.dayStreak} дн.
             </Muted>
           )}
+          {weak.length > 0 && (
+            <>
+              <Heading>🎯 Стоит повторить</Heading>
+              <Muted>Здесь ответов с ошибками было больше всего. Потренируйся ещё — станет легче.</Muted>
+              {weak.map((w) => (
+                <Pressable key={w.id} onPress={() => setPractice({ topic: w })}>
+                  <Card>
+                    <Row style={{ justifyContent: 'space-between' }}>
+                      <Text style={s.hwTitle}>{w.title}</Text>
+                      <Text style={s.xp}>{w.accuracy}%</Text>
+                    </Row>
+                    <Muted>{w.grade} класс · решено {w.total}, верно {w.accuracy}% — нажми, чтобы повторить</Muted>
+                  </Card>
+                </Pressable>
+              ))}
+            </>
+          )}
           {homework.length > 0 && (
             <>
               <Heading>📌 Домашние задания</Heading>
@@ -125,16 +145,26 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Icon name="trophy" size={44} />
-            <Heading>Рейтинг класса</Heading>
+            <Heading>Рейтинг</Heading>
           </View>
+          <Row style={{ marginBottom: 6 }}>
+            <Chip label="За неделю" active={period === 'week'} onPress={() => setPeriod('week')} />
+            <Chip label="За всё время" active={period === 'all'} onPress={() => setPeriod('all')} />
+          </Row>
+          {board && period === 'week' && (
+            <Card>
+              <RichText style={s.big}>⭐ {board.myWeekXp} XP за 7 дней</RichText>
+              <Muted>Опыт за верные ответы и игры за последнюю неделю.</Muted>
+            </Card>
+          )}
           {!board ? (
             <Muted>Загрузка…</Muted>
           ) : !board.classroom ? (
             <Card>
-              <Muted>Рейтинг появляется, когда вы вступаете в класс. Введите код от учителя во вкладке «Профиль».</Muted>
+              <Muted>Рейтинг класса появляется, когда вы вступаете в класс. Введите код от учителя во вкладке «Профиль».</Muted>
             </Card>
           ) : (
-            board.rows.map((r, i) => (
+            (period === 'week' ? board.weekRows : board.rows).map((r, i) => (
               <Card key={`${r.name}-${i}`} style={r.me ? { borderColor: colors.primary, backgroundColor: '#E6F3FD' } : undefined}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <RichText style={s.hwTitle}>

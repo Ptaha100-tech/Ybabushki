@@ -57,6 +57,12 @@ export class LearningController {
   }
 
   @Roles('student')
+  @Get('me/weak')
+  weak(@CurrentUser() user: AuthUser) {
+    return this.learning.weakTopics(user.id);
+  }
+
+  @Roles('student')
   @Get('me/homework')
   homework(@CurrentUser() user: AuthUser) {
     return this.learning.myHomework(user.id);

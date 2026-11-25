@@ -93,7 +93,17 @@ export class GamesService {
 
   async leaderboard(userId: string) {
     const user = await this.users.findOneOrFail({ where: { id: userId } });
-    if (!user.classroomId) return { classroom: false, rows: [] as { name: string; xp: number; me: boolean }[] };
+    const week: { id: string; xp: string }[] = await this.users.query(
+      `SELECT u.id, (COALESCE(a.x, 0) + COALESCE(g.x, 0))::text AS xp
+       FROM users u
+       LEFT JOIN (SELECT "userId", COUNT(*) FILTER (WHERE correct) * 10 AS x FROM attempts WHERE "createdAt" >= now() - interval '7 days' GROUP BY "userId") a ON a."userId" = u.id
+       LEFT JOIN (SELECT "userId", SUM(xp) AS x FROM game_results WHERE "createdAt" >= now() - interval '7 days' GROUP BY "userId") g ON g."userId" = u.id
+       WHERE u.id = $1 OR (u."classroomId" IS NOT NULL AND u."classroomId" = $2 AND u.role = 'student')`,
+      [userId, user.classroomId],
+    );
+    const weekXp = new Map(week.map((w) => [w.id, Number(w.xp)]));
+    const myWeekXp = weekXp.get(userId) ?? 0;
+    if (!user.classroomId) return { classroom: false, rows: [] as { name: string; xp: number; me: boolean }[], weekRows: [] as { name: string; xp: number; me: boolean }[], myWeekXp };
     const rows = await this.users.find({
       where: { classroomId: user.classroomId, role: 'student' },
       order: { xp: 'DESC' },
@@ -102,6 +112,10 @@ export class GamesService {
     return {
       classroom: true,
       rows: rows.map((r) => ({ name: r.name, xp: r.xp, me: r.id === userId })),
+      weekRows: rows
+        .map((r) => ({ name: r.name, xp: weekXp.get(r.id) ?? 0, me: r.id === userId }))
+        .sort((a, b) => b.xp - a.xp),
+      myWeekXp,
     };
   }
 }
