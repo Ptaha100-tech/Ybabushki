@@ -60,6 +60,8 @@ export class Topic {
   @Column({ type: 'varchar', default: 'math' }) subject: string;
   @Column({ type: 'varchar', nullable: true }) icon: string | null;
   @Column({ type: 'varchar', nullable: true }) contentHash: string | null;
+  /** Краткая теория перед заданиями (необязательно). */
+  @Column({ type: 'text', nullable: true }) theory: string | null;
   /** Тема, созданная учителем (у тем из общего банка пусто). */
   @Index() @Column({ type: 'uuid', nullable: true }) ownerId: string | null;
 }

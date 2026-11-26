@@ -27,6 +27,12 @@ export class LearningService {
     return this.topics.find({ where: { ownerId: IsNull() }, order: { position: 'ASC' } });
   }
 
+  async theory(topicId: string) {
+    const t = await this.topics.findOne({ where: { id: topicId } });
+    if (!t) throw new NotFoundException('Тема не найдена');
+    return { theory: t.theory };
+  }
+
   /** Пол и класс можно поменять в профиле (класс — только у ученика). */
   async updateProfile(userId: string, dto: { gender?: 'm' | 'f'; grade?: number }) {
     const user = await this.users.findOneOrFail({ where: { id: userId } });

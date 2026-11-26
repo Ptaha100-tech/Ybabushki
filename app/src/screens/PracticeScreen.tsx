@@ -29,6 +29,11 @@ export default function PracticeScreen({
   const [limit, setLimit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [done, setDone] = useState(0);
+  const [theory, setTheory] = useState<string | null>(null);
+  const [showTheory, setShowTheory] = useState(false);
+  useEffect(() => {
+    api.theory(topic.id).then((r) => setTheory(r.theory)).catch(() => undefined);
+  }, [topic.id]);
   const [right, setRight] = useState(0);
   const hero = useHero();
 
@@ -79,6 +84,18 @@ export default function PracticeScreen({
     <Screen>
       <Button kind="secondary" title="← К темам" onPress={onClose} />
       <Title>{topic.title}</Title>
+      {theory ? (
+        <>
+          <Button kind="secondary" title={showTheory ? 'Скрыть теорию' : '📖 Теория по теме'} onPress={() => setShowTheory(!showTheory)} />
+          {showTheory && (
+            <Card>
+              {theory.split('\n\n').map((p, i) => (
+                <Text key={i} style={{ fontSize: 16, lineHeight: 24, color: colors.text, marginBottom: 10 }}>{p}</Text>
+              ))}
+            </Card>
+          )}
+        </>
+      ) : null}
       {done > 0 && (
         <Muted>
           Сегодня в этой теме: {right} из {done} верно

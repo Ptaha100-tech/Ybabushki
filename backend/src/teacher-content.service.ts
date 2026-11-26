@@ -31,7 +31,7 @@ export class TeacherContentService {
     }
     const parsed = parseTasks(dto.text);
     const topic = await this.topics.save(
-      this.topics.create({ title: dto.title.trim(), grade: dto.grade, position: 0, slug: null, subject: dto.subject, icon: null, contentHash: null, ownerId: teacherId }),
+      this.topics.create({ title: dto.title.trim(), grade: dto.grade, position: 0, slug: null, subject: dto.subject, icon: null, contentHash: null, theory: null, ownerId: teacherId }),
     );
     await this.tasks.save(
       parsed.map((p) =>

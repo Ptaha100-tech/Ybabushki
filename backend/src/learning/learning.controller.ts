@@ -23,6 +23,11 @@ export class LearningController {
     return this.learning.listTopics();
   }
 
+  @Get('topics/:id/theory')
+  theory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.learning.theory(id);
+  }
+
   @Roles('student')
   @Get('topics/:id/next')
   next(

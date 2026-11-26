@@ -229,6 +229,7 @@ export const api = {
   createMyTopic: (b: { title: string; grade: number; subject: string; text: string }) =>
     request<{ id: string; title: string; tasks: number }>('POST', '/teacher/topics', b),
   deleteMyTopic: (id: string) => request<{ ok: boolean }>('DELETE', `/teacher/topics/${id}`),
+  theory: (topicId: string) => request<{ theory: string | null }>('GET', `/topics/${topicId}/theory`),
   weakTopics: () => request<(Topic & { total: number; accuracy: number })[]>('GET', '/me/weak'),
   nextTask: (topicId: string, homeworkId?: string, exclude?: string) => {
     const q = new URLSearchParams();

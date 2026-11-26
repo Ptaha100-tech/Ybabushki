@@ -13,6 +13,7 @@ import { physicsTopics } from './physics';
 import { russianTopics } from './russian';
 import { worldTopics } from './world';
 import { examTopics } from './exams';
+import { THEORY } from './theory';
 
 export * from './types';
 export * from './subjects';
@@ -68,7 +69,7 @@ export function buildAll(seeds: TopicSeed[] = ALL_SEEDS): StoredTopic[] {
 
   return sorted.map((t, position) => {
     const tasks = t.tasks.map((s, i) => finalizeTask(s, t.slug, i));
-    const contentHash = hashSeed(JSON.stringify([t.title, t.grade, t.subject, t.icon ?? '', tasks])).toString(16);
+    const contentHash = hashSeed(JSON.stringify([t.title, t.grade, t.subject, t.icon ?? '', tasks, THEORY[t.slug] ?? ''])).toString(16);
     return {
       slug: t.slug,
       subject: t.subject,
@@ -78,6 +79,7 @@ export function buildAll(seeds: TopicSeed[] = ALL_SEEDS): StoredTopic[] {
       position,
       contentHash,
       tasks,
+      theory: THEORY[t.slug] ?? null,
     };
   });
 }

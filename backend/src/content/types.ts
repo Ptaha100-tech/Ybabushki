@@ -46,6 +46,7 @@ export interface TopicSeed {
   title: string;
   icon?: string;
   tasks: TaskSeed[];
+  theory?: string;
 }
 
 /** Задание в том виде, в каком оно хранится в базе. */
@@ -73,4 +74,5 @@ export interface StoredTopic {
   position: number;
   contentHash: string;
   tasks: StoredTask[];
+  theory: string | null;
 }
