@@ -23,7 +23,7 @@ export class SeedService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     // 1. Удаляем старые темы первой версии (без slug) вместе с зависимыми данными.
-    const legacy = await this.topics.find({ where: { slug: IsNull() } });
+    const legacy = await this.topics.find({ where: { slug: IsNull(), ownerId: IsNull() } });
     if (legacy.length) {
       const ids = legacy.map((t) => t.id);
       await this.homeworks.delete({ topicId: In(ids) });

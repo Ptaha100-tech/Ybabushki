@@ -26,6 +26,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true }) verifyHash: string | null;
   @Column({ type: 'timestamp', nullable: true }) verifyExpires: Date | null;
   @Column({ type: 'int', default: 0 }) verifyAttempts: number;
+  /** Родитель: отключены ли еженедельные письма, и когда последнее ушло. */
+  @Column({ type: 'boolean', default: false }) reportsOff: boolean;
+  @Column({ type: 'timestamp', nullable: true }) lastReportAt: Date | null;
   @Column({ type: 'int', default: 0 }) xp: number;
   /** Монеты: за верные ответы и ежедневные задания, тратятся в магазине. */
   @Column({ type: 'int', default: 0 }) coins: number;
@@ -57,6 +60,8 @@ export class Topic {
   @Column({ type: 'varchar', default: 'math' }) subject: string;
   @Column({ type: 'varchar', nullable: true }) icon: string | null;
   @Column({ type: 'varchar', nullable: true }) contentHash: string | null;
+  /** Тема, созданная учителем (у тем из общего банка пусто). */
+  @Index() @Column({ type: 'uuid', nullable: true }) ownerId: string | null;
 }
 
 @Entity('tasks')

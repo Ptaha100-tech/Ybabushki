@@ -24,7 +24,7 @@ export class LearningService {
   ) {}
 
   listTopics() {
-    return this.topics.find({ order: { position: 'ASC' } });
+    return this.topics.find({ where: { ownerId: IsNull() }, order: { position: 'ASC' } });
   }
 
   /** Пол и класс можно поменять в профиле (класс — только у ученика). */
@@ -38,7 +38,8 @@ export class LearningService {
 
   /** Каталог для клиента: предметы и темы (с уровнем ученика по каждой теме). */
   async catalog(userId: string) {
-    const topics = await this.topics.find({ order: { position: 'ASC' } });
+    const all = await this.topics.find({ order: { position: 'ASC' } });
+    const topics = all.filter((t) => !t.ownerId || t.ownerId === userId);
     const counts: { topicId: string; n: string }[] = await this.tasks.query(
       `SELECT "topicId", COUNT(*)::text AS n FROM tasks GROUP BY "topicId"`,
     );

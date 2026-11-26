@@ -26,6 +26,7 @@ export interface User {
   gender?: 'm' | 'f' | null;
   emailVerified?: boolean;
   coins?: number;
+  reportsOff?: boolean;
   frame?: string | null;
   titleId?: string | null;
   xp: number;
@@ -222,6 +223,12 @@ export const api = {
   shop: () => request<ShopData>('GET', '/shop'),
   buyItem: (id: string) => request<ShopData>('POST', `/shop/${id}/buy`),
   equipItem: (id: string) => request<ShopData>('POST', `/shop/${id}/equip`),
+  reportNow: () => request<{ ok: boolean; mail: boolean }>('POST', '/parent/report-now'),
+  setReports: (enabled: boolean) => request<{ enabled: boolean }>('POST', '/parent/reports', { enabled }),
+  myTopics: () => request<{ id: string; title: string; grade: number; subject: string; tasks: number }[]>('GET', '/teacher/topics'),
+  createMyTopic: (b: { title: string; grade: number; subject: string; text: string }) =>
+    request<{ id: string; title: string; tasks: number }>('POST', '/teacher/topics', b),
+  deleteMyTopic: (id: string) => request<{ ok: boolean }>('DELETE', `/teacher/topics/${id}`),
   weakTopics: () => request<(Topic & { total: number; accuracy: number })[]>('GET', '/me/weak'),
   nextTask: (topicId: string, homeworkId?: string, exclude?: string) => {
     const q = new URLSearchParams();

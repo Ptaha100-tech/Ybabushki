@@ -22,6 +22,7 @@ export function publicUser(u: User) {
     emailVerified: u.emailVerified,
     xp: u.xp,
     coins: u.coins,
+    reportsOff: u.reportsOff,
     frame: u.frame,
     titleId: u.titleId,
     dayStreak: u.dayStreak,

@@ -9,6 +9,25 @@ export default function ParentScreen({ user, onLogout, onTour, onUser }: { user:
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const sendReport = async () => {
+    setError('');
+    setInfo('');
+    try {
+      const r = await api.reportNow();
+      setInfo(!r.mail ? 'Почта на сервере ещё не настроена — письмо не отправлено.' : r.ok ? 'Отчёт отправлен на вашу почту.' : 'Нечего отправлять: добавьте ребёнка по коду.');
+    } catch (e) {
+      setError(errMsg(e));
+    }
+  };
+  const toggleReports = async () => {
+    setError('');
+    try {
+      const r = await api.setReports(!!user.reportsOff);
+      onUser?.({ ...user, reportsOff: !r.enabled });
+    } catch (e) {
+      setError(errMsg(e));
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -83,6 +102,16 @@ export default function ParentScreen({ user, onLogout, onTour, onUser }: { user:
       </Card>
 
       {onUser && <EmailVerify user={user} onUser={onUser} />}
+      <Heading>Письма об успехах</Heading>
+      <Card>
+        <Muted>Раз в неделю (по понедельникам) мы присылаем на вашу почту итоги: сколько заданий решил ребёнок, точность и темы для повторения.</Muted>
+        <Button kind="secondary" title="Прислать отчёт сейчас" onPress={sendReport} />
+        <Button
+          kind="secondary"
+          title={user.reportsOff ? 'Включить еженедельные письма' : 'Отключить еженедельные письма'}
+          onPress={toggleReports}
+        />
+      </Card>
       {onTour && <Button kind="secondary" title="Показать обучение" onPress={onTour} />}
       <Button kind="secondary" title="Выйти" onPress={onLogout} />
     </Screen>

@@ -16,6 +16,9 @@ import { RewardsService } from './learning/rewards.service';
 import { ParentController } from './parent/parent.controller';
 import { ParentService } from './parent/parent.service';
 import { MailerService } from './mailer.service';
+import { ReportsService } from './reports.service';
+import { TeacherContentController } from './teacher-content.controller';
+import { TeacherContentService } from './teacher-content.service';
 import { SeedService } from './seed.service';
 import { SubscriptionsService } from './subscriptions.service';
 
@@ -45,7 +48,7 @@ class HealthController {
     TypeOrmModule.forFeature(ENTITIES),
     JwtModule.register({ global: true, secret: jwtSecret, signOptions: { expiresIn: '30d' } }),
   ],
-  controllers: [HealthController, AuthController, LearningController, GamesController, RewardsController, ClassesController, ParentController],
-  providers: [AuthService, AuthGuard, LearningService, GamesService, RewardsService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService],
+  controllers: [HealthController, AuthController, LearningController, GamesController, RewardsController, ClassesController, ParentController, TeacherContentController],
+  providers: [AuthService, AuthGuard, LearningService, GamesService, RewardsService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService, ReportsService, TeacherContentService],
 })
 export class AppModule {}

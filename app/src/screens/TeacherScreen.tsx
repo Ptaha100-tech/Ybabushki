@@ -1,4 +1,5 @@
 import EmailVerify from '../EmailVerify';
+import MyTasks from '../MyTasks';
 import { RichText } from '../Art';
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ClassDetail, ClassSummary, errMsg, Topic, User } from '../api';
@@ -58,6 +59,7 @@ export default function TeacherScreen({ user, onLogout, onTour, onUser }: { user
         <Button title="Создать класс" onPress={create} disabled={!name.trim()} />
       </Card>
 
+      <MyTasks />
       {onUser && <EmailVerify user={user} onUser={onUser} />}
       {onTour && <Button kind="secondary" title="Показать обучение" onPress={onTour} />}
       <Button kind="secondary" title="Выйти" onPress={onLogout} />

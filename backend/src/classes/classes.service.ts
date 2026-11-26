@@ -98,7 +98,7 @@ export class ClassesService {
   async assignHomework(teacherId: string, classId: string, topicId: string, dueAt?: string) {
     const c = await this.own(teacherId, classId);
     const topic = await this.topics.findOne({ where: { id: topicId } });
-    if (!topic) throw new NotFoundException('Тема не найдена');
+    if (!topic || (topic.ownerId && topic.ownerId !== teacherId)) throw new NotFoundException('Тема не найдена');
     const hw = await this.homeworks.save(
       this.homeworks.create({ classroomId: c.id, topicId, dueAt: dueAt ? new Date(dueAt) : null }),
     );
