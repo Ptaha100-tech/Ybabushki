@@ -13,6 +13,7 @@ import { physicsTopics } from './physics';
 import { russianTopics } from './russian';
 import { worldTopics } from './world';
 import { examTopics } from './exams';
+import { examTopics2 } from './exams2';
 import { THEORY } from './theory';
 
 export * from './types';
@@ -31,6 +32,7 @@ export const ALL_SEEDS: TopicSeed[] = [
   ...historyTopics,
   ...informaticsTopics,
   ...examTopics,
+  ...examTopics2,
 ];
 
 const TF = ['Верно', 'Неверно'];
