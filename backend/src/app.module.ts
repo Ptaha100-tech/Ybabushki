@@ -1,6 +1,8 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminController } from './admin.controller';
+import { AdminService } from './admin.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AuthGuard } from './auth/guards';
@@ -48,7 +50,7 @@ class HealthController {
     TypeOrmModule.forFeature(ENTITIES),
     JwtModule.register({ global: true, secret: jwtSecret, signOptions: { expiresIn: '30d' } }),
   ],
-  controllers: [HealthController, AuthController, LearningController, GamesController, RewardsController, ClassesController, ParentController, TeacherContentController],
-  providers: [AuthService, AuthGuard, LearningService, GamesService, RewardsService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService, ReportsService, TeacherContentService],
+  controllers: [HealthController, AuthController, LearningController, GamesController, RewardsController, ClassesController, ParentController, TeacherContentController, AdminController],
+  providers: [AuthService, AuthGuard, LearningService, GamesService, RewardsService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService, ReportsService, TeacherContentService, AdminService],
 })
 export class AppModule {}

@@ -6,6 +6,7 @@ import { setGuideUser } from './src/heroes';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import { api, loadToken, setToken, User } from './src/api';
 import './src/install';
+import AdminScreen from './src/screens/AdminScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import InfoScreen, { InfoKind } from './src/screens/InfoScreen';
 import LandingScreen from './src/screens/LandingScreen';
@@ -87,6 +88,8 @@ export default function App() {
     body = <OnboardingScreen user={user} onUser={setUser} onDone={finishTour} />;
   } else if (user.role === 'student') {
     body = <StudentScreen user={user} onLogout={logout} onInfo={showInfo} onUser={setUser} onTour={() => setTour(true)} />;
+  } else if (user.role === 'admin') {
+    body = <AdminScreen user={user} onLogout={logout} />;
   } else if (user.role === 'teacher') {
     body = <TeacherScreen user={user} onLogout={logout} onUser={setUser} onTour={() => setTour(true)} />;
   } else {

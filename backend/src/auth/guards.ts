@@ -11,6 +11,9 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '../entities';
 
+/** Заблокированные пользователи (заполняется при старте и при блокировке в админке). */
+export const BLOCKED = new Set<string>();
+
 export interface AuthUser {
   id: string;
   role: Role;
@@ -39,6 +42,8 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException('Сессия истекла, войдите снова');
     }
+
+    if (BLOCKED.has(req.user.id)) throw new ForbiddenException('Аккаунт заблокирован');
 
     const roles = this.reflector.getAllAndOverride<Role[] | undefined>('roles', [
       ctx.getHandler(),

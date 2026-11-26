@@ -94,7 +94,7 @@ export function Field({ label, ...props }: TextInputProps & { label?: string }) 
   return (
     <View style={{ marginBottom: 12 }}>
       {label ? <Text style={s.label}>{label}</Text> : null}
-      <TextInput placeholderTextColor={colors.muted} style={s.input} {...props} />
+      <TextInput placeholderTextColor={colors.muted} {...props} style={[s.input, props.style]} />
     </View>
   );
 }

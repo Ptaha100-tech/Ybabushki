@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
-export type Role = 'student' | 'teacher' | 'parent';
+export type Role = 'student' | 'teacher' | 'parent' | 'admin';
 export type TaskType = 'choice' | 'number' | 'text' | 'order' | 'match';
 
 @Entity('users')
@@ -17,6 +17,8 @@ export class User {
   /** 'm' | 'f' — нужен, чтобы выбрать ведущего обучение героя. */
   @Column({ type: 'varchar', length: 1, nullable: true }) gender: string | null;
   @Column({ type: 'boolean', default: false }) emailVerified: boolean;
+  /** Заблокирован администратором: войти и пользоваться сервисом нельзя. */
+  @Column({ type: 'boolean', default: false }) blocked: boolean;
   /** Когда пользователь принял политику и условия. */
   @Column({ type: 'timestamp', nullable: true }) consentAt: Date | null;
   /** Одноразовые коды (хранятся хешем): 'reset' — сброс пароля, 'verify' — подтверждение почты. */

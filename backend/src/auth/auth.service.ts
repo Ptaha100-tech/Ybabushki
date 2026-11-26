@@ -1,5 +1,5 @@
 import { resetMail, verifyMail } from '../mail-templates';
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -75,6 +75,7 @@ export class AuthService {
     const user = await this.users.findOne({ where: { email: dto.email.trim().toLowerCase() } });
     const ok = user ? await bcrypt.compare(dto.password, user.passwordHash) : false;
     if (!user || !ok) throw new UnauthorizedException('Неверный e-mail или пароль');
+    if (user.blocked) throw new ForbiddenException('Аккаунт заблокирован. Напишите в поддержку.');
     return this.session(user);
   }
 

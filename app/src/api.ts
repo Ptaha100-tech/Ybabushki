@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 const BASE = (process.env.EXPO_PUBLIC_API_URL ?? '/api').replace(/\/$/, '');
 
-export type Role = 'student' | 'teacher' | 'parent';
+export type Role = 'student' | 'teacher' | 'parent' | 'admin';
 
 export interface QuestItem { id: string; title: string; icon: string; target: number; reward: number; progress: number; claimed: boolean }
 export interface QuestsData { coins: number; quests: QuestItem[] }
@@ -14,6 +14,18 @@ export interface ShopItemData { id: string; kind: 'frame' | 'title'; name: strin
 export interface ShopData { coins: number; frame: string | null; titleId: string | null; items: ShopItemData[] }
 export interface LeaderRow { name: string; xp: number; me: boolean }
 export interface Leaderboard { classroom: boolean; rows: LeaderRow[]; weekRows: LeaderRow[]; myWeekXp: number }
+
+export interface AdminStats {
+  users: { total: number; students: number; teachers: number; parents: number; admins: number; unverified: number; blocked: number; today: number; week: number; activeToday: number; activeWeek: number };
+  attempts: { today: number; week: number; accuracyWeek: number; total: number };
+  content: { topics: number; tasks: number; classes: number; subscriptions: number; games: number };
+  regSeries: { d: string; n: number }[];
+  actSeries: { d: string; n: number }[];
+  system: { mail: boolean; uptimeH: number; node: string };
+}
+export interface AdminUserRow { id: string; email: string; name: string; role: Role; grade: number | null; xp: number; coins: number; dayStreak: number; emailVerified: boolean; blocked: boolean; createdAt: string; lastActiveDate: string | null }
+export interface AdminUserDetail extends AdminUserRow { gender: string | null; consentAt: string | null; attempts: number; correct: number; classroom: string | null; links: { name: string; email: string; role: string }[] }
+export interface AdminTopic { id: string; title: string; grade: number; subject: string; slug: string | null; custom: boolean; hasTheory: boolean; tasks: number; attempts: number }
 
 export interface User {
   id: string;
@@ -189,6 +201,19 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
+  adminStats: () => request<AdminStats>('GET', '/admin/stats'),
+  adminUsers: (q: string, role: string, page: number) =>
+    request<{ total: number; page: number; rows: AdminUserRow[] }>('GET', `/admin/users?q=${encodeURIComponent(q)}&role=${role}&page=${page}`),
+  adminUser: (id: string) => request<AdminUserDetail>('GET', `/admin/users/${id}`),
+  adminBlock: (id: string, blocked: boolean) => request<{ ok: boolean }>('POST', `/admin/users/${id}/block`, { blocked }),
+  adminRole: (id: string, role: Role) => request<{ ok: boolean }>('POST', `/admin/users/${id}/role`, { role }),
+  adminVerify: (id: string) => request<{ ok: boolean }>('POST', `/admin/users/${id}/verify`),
+  adminCoins: (id: string, delta: number) => request<{ ok: boolean; coins: number }>('POST', `/admin/users/${id}/coins`, { delta }),
+  adminPassword: (id: string) => request<{ password: string }>('POST', `/admin/users/${id}/password`),
+  adminDelete: (id: string) => request<{ ok: boolean }>('DELETE', `/admin/users/${id}`),
+  adminTopics: (q: string) => request<AdminTopic[]>('GET', `/admin/topics?q=${encodeURIComponent(q)}`),
+  adminBroadcast: (b: { subject: string; text: string; audience: string; dryRun: boolean }) =>
+    request<{ count: number; started: boolean }>('POST', '/admin/broadcast', b),
   register: (b: { email: string; password: string; name: string; role: Role; grade?: number; gender: 'm' | 'f'; consent: boolean }) =>
     request<{ token: string; user: User }>('POST', '/auth/register', b),
   forgot: (email: string) => request<{ ok: boolean; mail: boolean }>('POST', '/auth/forgot', { email }),
