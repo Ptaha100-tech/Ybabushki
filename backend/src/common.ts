@@ -21,6 +21,9 @@ export function publicUser(u: User) {
     gender: u.gender,
     emailVerified: u.emailVerified,
     xp: u.xp,
+    coins: u.coins,
+    frame: u.frame,
+    titleId: u.titleId,
     dayStreak: u.dayStreak,
   };
 }

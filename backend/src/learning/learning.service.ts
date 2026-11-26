@@ -134,7 +134,10 @@ export class LearningService {
     await this.progress.save(prog);
 
     const user = await this.users.findOneOrFail({ where: { id: userId } });
-    if (correct) user.xp += 10;
+    if (correct) {
+      user.xp += 10;
+      user.coins += 1;
+    }
     this.touchStreak(user);
     await this.users.save(user);
 
@@ -144,6 +147,7 @@ export class LearningService {
       explanation: task.data.explanation ?? null,
       hint: correct ? null : task.hint,
       xp: user.xp,
+      coins: user.coins,
       dayStreak: user.dayStreak,
       level: prog.level,
       remaining: homeworkId ? null : await this.remainingToday(userId),

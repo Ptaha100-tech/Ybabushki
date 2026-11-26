@@ -27,6 +27,10 @@ export class User {
   @Column({ type: 'timestamp', nullable: true }) verifyExpires: Date | null;
   @Column({ type: 'int', default: 0 }) verifyAttempts: number;
   @Column({ type: 'int', default: 0 }) xp: number;
+  /** Монеты: за верные ответы и ежедневные задания, тратятся в магазине. */
+  @Column({ type: 'int', default: 0 }) coins: number;
+  @Column({ type: 'varchar', nullable: true }) frame: string | null;
+  @Column({ type: 'varchar', nullable: true }) titleId: string | null;
   @Column({ type: 'int', default: 0 }) dayStreak: number;
   @Column({ type: 'date', nullable: true }) lastActiveDate: string | null;
   @CreateDateColumn() createdAt: Date;
@@ -95,6 +99,24 @@ export class Attempt {
   @CreateDateColumn() createdAt: Date;
 }
 
+@Entity('quest_claims')
+@Unique(['userId', 'date', 'questId'])
+export class QuestClaim {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ type: 'uuid' }) userId: string;
+  @Column({ type: 'varchar', length: 10 }) date: string;
+  @Column({ type: 'varchar' }) questId: string;
+}
+
+@Entity('purchases')
+@Unique(['userId', 'itemId'])
+export class Purchase {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ type: 'uuid' }) userId: string;
+  @Column({ type: 'varchar' }) itemId: string;
+  @CreateDateColumn() createdAt: Date;
+}
+
 @Entity('game_results')
 export class GameResult {
   @PrimaryGeneratedColumn('uuid') id: string;
@@ -144,4 +166,6 @@ export const ENTITIES = [
   ParentLink,
   Subscription,
   GameResult,
+  QuestClaim,
+  Purchase,
 ];

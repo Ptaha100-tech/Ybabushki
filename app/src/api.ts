@@ -8,6 +8,10 @@ const BASE = (process.env.EXPO_PUBLIC_API_URL ?? '/api').replace(/\/$/, '');
 
 export type Role = 'student' | 'teacher' | 'parent';
 
+export interface QuestItem { id: string; title: string; icon: string; target: number; reward: number; progress: number; claimed: boolean }
+export interface QuestsData { coins: number; quests: QuestItem[] }
+export interface ShopItemData { id: string; kind: 'frame' | 'title'; name: string; price: number; value: string; owned: boolean; equipped: boolean }
+export interface ShopData { coins: number; frame: string | null; titleId: string | null; items: ShopItemData[] }
 export interface LeaderRow { name: string; xp: number; me: boolean }
 export interface Leaderboard { classroom: boolean; rows: LeaderRow[]; weekRows: LeaderRow[]; myWeekXp: number }
 
@@ -21,6 +25,9 @@ export interface User {
   grade?: number | null;
   gender?: 'm' | 'f' | null;
   emailVerified?: boolean;
+  coins?: number;
+  frame?: string | null;
+  titleId?: string | null;
   xp: number;
   dayStreak: number;
 }
@@ -210,6 +217,11 @@ export const api = {
     request<{ xp: number; totalXp: number; dailyCapReached: boolean }>('POST', '/games/result', { game, score }),
   leaderboard: () =>
     request<Leaderboard>('GET', '/me/leaderboard'),
+  quests: () => request<QuestsData>('GET', '/me/quests'),
+  claimQuest: (id: string) => request<{ coins: number; reward: number }>('POST', `/me/quests/${id}/claim`),
+  shop: () => request<ShopData>('GET', '/shop'),
+  buyItem: (id: string) => request<ShopData>('POST', `/shop/${id}/buy`),
+  equipItem: (id: string) => request<ShopData>('POST', `/shop/${id}/equip`),
   weakTopics: () => request<(Topic & { total: number; accuracy: number })[]>('GET', '/me/weak'),
   nextTask: (topicId: string, homeworkId?: string, exclude?: string) => {
     const q = new URLSearchParams();

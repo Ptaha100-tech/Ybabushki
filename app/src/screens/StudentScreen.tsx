@@ -4,6 +4,8 @@ import { api, errMsg, HomeworkItem, Leaderboard, Stats, Topic, User } from '../a
 import { Emo, HeroPic, Icon, RichText } from '../Art';
 import { HERO_NAMES, useHero } from '../heroes';
 import EmailVerify from '../EmailVerify';
+import QuestsCard from '../QuestsCard';
+import ShopPanel from '../ShopPanel';
 import ProfileEditor from '../ProfileEditor';
 import InstallCard from '../InstallCard';
 import TopicBrowser from '../TopicBrowser';
@@ -12,7 +14,14 @@ import GamesScreen from './GamesScreen';
 import { InfoKind } from './InfoScreen';
 import PracticeScreen from './PracticeScreen';
 
-type Tab = 'learn' | 'games' | 'rating' | 'me';
+const FRAME_COLORS: Record<string, string> = {
+  'frame-green': '#22C55E', 'frame-purple': '#8B5CF6', 'frame-orange': '#FD7124', 'frame-gold': '#F5B301', 'frame-pink': '#EC4899',
+};
+const TITLE_TEXT: Record<string, string> = {
+  'title-clever': 'Умник', 'title-explorer': 'Исследователь', 'title-champ': 'Чемпион', 'title-legend': 'Легенда школы',
+};
+
+type Tab = 'learn' | 'games' | 'shop' | 'rating' | 'me';
 
 export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }: { user: User; onLogout: () => void; onInfo: (k: InfoKind) => void; onUser: (u: User) => void; onTour: () => void }) {
   const [tab, setTab] = useState<Tab>('learn');
@@ -67,6 +76,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
   const NAV: [Tab, string, string][] = [
     ['learn', '📚', 'Учёба'],
     ['games', '🎮', 'Игры'],
+    ['shop', '🎒', 'Магазин'],
     ['rating', '🏆', 'Рейтинг'],
     ['me', '👤', 'Профиль'],
   ];
@@ -77,12 +87,12 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
       <View style={s.head}>
         <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-            <View style={s.avatar}>
+            <View style={[s.avatar, user.frame ? { borderWidth: 4, borderColor: FRAME_COLORS[user.frame] ?? colors.cta } : null]}>
               <HeroPic hero={hero} pose="wave" size={74} style={{ position: 'absolute', top: 0, left: -2 }} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.hello}>Привет, {user.name}!</Text>
-              <Text style={s.lvl}>{stats ? `Уровень ${stats.level} · ${stats.title}` : ' '}</Text>
+              <Text style={s.lvl}>{stats ? `Уровень ${stats.level} · ${TITLE_TEXT[user.titleId ?? ''] ?? stats.title}` : ' '}</Text>
             </View>
           </View>
           <View style={s.xpPill}>
@@ -97,8 +107,11 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
 
       <ErrorText text={error} />
 
+      {tab === 'shop' && <ShopPanel onUser={onUser} />}
+
       {tab === 'learn' && (
         <>
+          <QuestsCard refreshKey={stats?.total} />
           {stats && (
             <Muted>
               {stats.remaining === null ? '♾️ Безлимитные занятия включены' : `Бесплатных заданий сегодня осталось: ${stats.remaining}`} · 🔥 серия {stats.dayStreak} дн.
