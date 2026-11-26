@@ -1,3 +1,4 @@
+import { ChildReport, reportMail } from './mail-templates';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -37,7 +38,7 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
   async sendFor(parent: User): Promise<boolean> {
     const links = await this.links.find({ where: { parentId: parent.id } });
     if (links.length === 0) return false;
-    const blocks: string[] = [];
+    const kids: ChildReport[] = [];
     for (const l of links) {
       const child = await this.users.findOne({ where: { id: l.studentId } });
       if (!child) continue;
@@ -54,18 +55,11 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
       );
       const n = Number(w[0]?.n ?? 0);
       const c = Number(w[0]?.c ?? 0);
-      blocks.push(
-        [
-          `${child.name}${child.grade ? ` (${child.grade} класс)` : ''}`,
-          `  Заданий за неделю: ${n}, верных: ${c}${n ? ` (${Math.round((c / n) * 100)}%)` : ''}`,
-          `  Занимался подряд дней: ${child.dayStreak}, всего опыта: ${child.xp}`,
-          n === 0 ? '  На этой неделе занятий не было — самое время напомнить 🙂' : weak.length ? `  Стоит повторить: ${weak.map((x) => x.title).join('; ')}` : '  Слабых тем не видно — отличная работа!',
-        ].join('\n'),
-      );
+      kids.push({ name: child.name, grade: child.grade ?? null, n, c, streak: child.dayStreak, xp: child.xp, weak: weak.map((x) => x.title) });
     }
-    if (blocks.length === 0) return false;
-    const text = `Здравствуйте, ${parent.name}!\n\nИтоги недели в «Моя школа»:\n\n${blocks.join('\n\n')}\n\nОтключить письма можно в кабинете родителя.`;
-    const ok = await this.mailer.send(parent.email, 'Итоги недели — Моя школа', text);
+    if (kids.length === 0) return false;
+    const m = reportMail(parent.name, kids);
+    const ok = await this.mailer.send(parent.email, m.subject, m.text, m.html);
     if (ok) {
       parent.lastReportAt = new Date();
       await this.users.save(parent);

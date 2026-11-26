@@ -1,3 +1,4 @@
+import { resetMail, verifyMail } from '../mail-templates';
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -91,7 +92,8 @@ export class AuthService {
     user.verifyExpires = new Date(Date.now() + CODE_TTL_MS);
     user.verifyAttempts = 0;
     await this.users.save(user);
-    await this.mailer.send(user.email, 'Подтверждение почты — Моя школа', `Ваш код подтверждения: ${code}\nКод действует 30 минут.`);
+    const m = verifyMail(user.name, code);
+    await this.mailer.send(user.email, m.subject, m.text, m.html);
   }
 
   async resendVerify(id: string) {
@@ -129,7 +131,8 @@ export class AuthService {
       user.resetAttempts = 0;
       await this.users.save(user);
       // Не ждём отправки письма: ответ уходит сразу, а ошибки почты попадут в журнал сервера.
-      void this.mailer.send(user.email, 'Сброс пароля — Моя школа', `Код для смены пароля: ${code}\nКод действует 30 минут. Если вы не просили сбросить пароль, просто проигнорируйте письмо.`);
+      const m = resetMail(user.name, code);
+      void this.mailer.send(user.email, m.subject, m.text, m.html);
     }
     return { ok: true, mail: this.mailer.enabled };
   }
