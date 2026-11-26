@@ -128,7 +128,8 @@ export class AuthService {
       user.resetExpires = new Date(Date.now() + CODE_TTL_MS);
       user.resetAttempts = 0;
       await this.users.save(user);
-      await this.mailer.send(user.email, 'Сброс пароля — Моя школа', `Код для смены пароля: ${code}\nКод действует 30 минут. Если вы не просили сбросить пароль, просто проигнорируйте письмо.`);
+      // Не ждём отправки письма: ответ уходит сразу, а ошибки почты попадут в журнал сервера.
+      void this.mailer.send(user.email, 'Сброс пароля — Моя школа', `Код для смены пароля: ${code}\nКод действует 30 минут. Если вы не просили сбросить пароль, просто проигнорируйте письмо.`);
     }
     return { ok: true, mail: this.mailer.enabled };
   }
