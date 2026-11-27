@@ -15,6 +15,7 @@ import { worldTopics } from './world';
 import { examTopics } from './exams';
 import { examTopics2 } from './exams2';
 import { THEORY } from './theory';
+import { autoExplain } from './explain';
 
 export * from './types';
 export * from './subjects';
@@ -47,7 +48,7 @@ export function finalizeTask(seed: TaskSeed, slug: string, index: number): Store
   if (seed.accept) data.accept = seed.accept;
   if (seed.items) data.items = seed.items;
   if (seed.pairs) data.pairs = seed.pairs;
-  if (seed.explanation) data.explanation = seed.explanation;
+  data.explanation = autoExplain(seed);
   return {
     type: seed.kind,
     prompt: seed.prompt,
