@@ -264,7 +264,7 @@ export default function PracticeScreen({
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <HeroPic hero={hero} pose={result.correct ? 'thumbs' : 'think'} size={86} />
                 <View style={{ flex: 1 }}>
-                  {result.explanation ? <RichText style={s.explain}>💡 {result.explanation}</RichText> : null}
+                  {result.explanation ? <RichText style={s.explain}>{result.correct ? '💡 ' : '💡 Почему так: '}{result.explanation}</RichText> : null}
                 </View>
               </View>
               <Muted>⭐ {result.xp} XP · 🔥 {result.dayStreak} дн.</Muted>
