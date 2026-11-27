@@ -4,6 +4,7 @@ import { AdminService } from './admin.service';
 import { AuthGuard, AuthUser, CurrentUser, Roles } from './auth/guards';
 import { Role } from './entities';
 
+class SubDto { @IsInt() @Min(0) @Max(3650) days: number }
 class BlockDto { @IsBoolean() blocked: boolean }
 class RoleDto { @IsIn(['student', 'teacher', 'parent', 'admin']) role: Role }
 class CoinsDto { @IsInt() @Min(-100000) @Max(100000) delta: number }
@@ -29,6 +30,8 @@ export class AdminController {
   @Post('users/:id/verify') verify(@CurrentUser() a: AuthUser, @Param('id', ParseUUIDPipe) id: string) { return this.admin.verifyEmail(a.id, id); }
   @Post('users/:id/coins') coins(@CurrentUser() a: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() d: CoinsDto) { return this.admin.addCoins(a.id, id, d.delta); }
   @Post('users/:id/password') password(@CurrentUser() a: AuthUser, @Param('id', ParseUUIDPipe) id: string) { return this.admin.tempPassword(a.id, id); }
+  @Post('users/:id/subscription') grant(@CurrentUser() a: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() d: SubDto) { return this.admin.grantSub(a.id, id, d.days); }
+  @Delete('users/:id/subscription') revoke(@CurrentUser() a: AuthUser, @Param('id', ParseUUIDPipe) id: string) { return this.admin.revokeSub(a.id, id); }
   @Delete('users/:id') remove(@CurrentUser() a: AuthUser, @Param('id', ParseUUIDPipe) id: string) { return this.admin.remove(a.id, id); }
   @Get('topics') topics(@Query('q') q?: string) { return this.admin.topics(q); }
   @Post('broadcast') broadcast(@Body() d: BroadcastDto) { return this.admin.broadcast(d.subject, d.text, d.audience, d.dryRun); }

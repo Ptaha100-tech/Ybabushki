@@ -24,7 +24,8 @@ export interface AdminStats {
   system: { mail: boolean; uptimeH: number; node: string };
 }
 export interface AdminUserRow { id: string; email: string; name: string; role: Role; grade: number | null; xp: number; coins: number; dayStreak: number; emailVerified: boolean; blocked: boolean; createdAt: string; lastActiveDate: string | null }
-export interface AdminUserDetail extends AdminUserRow { gender: string | null; consentAt: string | null; attempts: number; correct: number; classroom: string | null; links: { name: string; email: string; role: string }[] }
+export interface AdminUserDetail extends AdminUserRow {
+  subscriptionUntil: string | null; gender: string | null; consentAt: string | null; attempts: number; correct: number; classroom: string | null; links: { name: string; email: string; role: string }[] }
 export interface AdminTopic { id: string; title: string; grade: number; subject: string; slug: string | null; custom: boolean; hasTheory: boolean; tasks: number; attempts: number }
 
 export interface User {
@@ -210,6 +211,8 @@ export const api = {
   adminVerify: (id: string) => request<{ ok: boolean }>('POST', `/admin/users/${id}/verify`),
   adminCoins: (id: string, delta: number) => request<{ ok: boolean; coins: number }>('POST', `/admin/users/${id}/coins`, { delta }),
   adminPassword: (id: string) => request<{ password: string }>('POST', `/admin/users/${id}/password`),
+  adminGrant: (id: string, days: number) => request<{ ok: boolean; until: string }>('POST', `/admin/users/${id}/subscription`, { days }),
+  adminRevoke: (id: string) => request<{ ok: boolean }>('DELETE', `/admin/users/${id}/subscription`),
   adminDelete: (id: string) => request<{ ok: boolean }>('DELETE', `/admin/users/${id}`),
   adminTopics: (q: string) => request<AdminTopic[]>('GET', `/admin/topics?q=${encodeURIComponent(q)}`),
   adminBroadcast: (b: { subject: string; text: string; audience: string; dryRun: boolean }) =>

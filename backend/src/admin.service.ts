@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { BLOCKED } from './auth/guards';
-import { Role, User } from './entities';
+import { MoreThan } from 'typeorm';
+import { Role, Subscription, User } from './entities';
 import { plainMail } from './mail-templates';
 import { MailerService } from './mailer.service';
 import { randomCode } from './common';
@@ -15,7 +16,11 @@ export class AdminService implements OnModuleInit {
   private log = new Logger('Admin');
   private sending = false;
 
-  constructor(@InjectRepository(User) private users: Repository<User>, private mailer: MailerService) {}
+  constructor(
+    @InjectRepository(User) private users: Repository<User>,
+    @InjectRepository(Subscription) private subs: Repository<Subscription>,
+    private mailer: MailerService,
+  ) {}
 
   async onModuleInit() {
     const rows = await this.users.find({ where: { blocked: true }, select: ['id'] });
@@ -107,7 +112,9 @@ export class AdminService implements OnModuleInit {
       [id],
     );
     const [cls] = u.classroomId ? await this.users.query(`SELECT name FROM classrooms WHERE id = $1`, [u.classroomId]) : [null];
+    const sub = await this.subs.findOne({ where: { studentId: id, status: 'active', expiresAt: MoreThan(new Date()) }, order: { expiresAt: 'DESC' } });
     return {
+      subscriptionUntil: sub ? sub.expiresAt : null,
       id: u.id, email: u.email, name: u.name, role: u.role, grade: u.grade, gender: u.gender, xp: u.xp, coins: u.coins, dayStreak: u.dayStreak,
       emailVerified: u.emailVerified, blocked: u.blocked, createdAt: u.createdAt, lastActiveDate: u.lastActiveDate, consentAt: u.consentAt,
       attempts: Number(a.n), correct: Number(a.c), classroom: cls?.name ?? null, links,
@@ -160,6 +167,24 @@ export class AdminService implements OnModuleInit {
     u.passwordHash = await bcrypt.hash(pass, 10);
     await this.users.save(u);
     return { password: pass };
+  }
+
+  /** Продлевает безлимит ученика на N дней (от конца текущей подписки). days=0 — «навсегда» (до 2100 года). */
+  async grantSub(adminId: string, id: string, days: number) {
+    const u = await this.target(adminId, id, true);
+    if (u.role !== 'student') throw new BadRequestException('Безлимит выдаётся ученикам');
+    const cur = await this.subs.findOne({ where: { studentId: id, status: 'active', expiresAt: MoreThan(new Date()) }, order: { expiresAt: 'DESC' } });
+    const from = cur ? cur.expiresAt : new Date();
+    const expiresAt = days === 0 ? new Date('2100-01-01T00:00:00Z') : new Date(from.getTime() + days * 86_400_000);
+    await this.subs.save(this.subs.create({ studentId: id, parentId: adminId, plan: days === 0 ? 'forever' : `admin-${days}d`, status: 'active', expiresAt }));
+    return { ok: true, until: expiresAt };
+  }
+
+  /** Снимает безлимит (все действующие подписки ученика). */
+  async revokeSub(adminId: string, id: string) {
+    await this.target(adminId, id, true);
+    await this.subs.update({ studentId: id, status: 'active' }, { status: 'cancelled' });
+    return { ok: true };
   }
 
   async remove(adminId: string, id: string) {

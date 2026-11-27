@@ -129,6 +129,20 @@ function UserCard({ id, me, onClose, onChanged }: { id: string; me: string; onCl
       <Muted>{ROLE_RU[u.role]}{u.grade ? ` · ${u.grade} класс` : ''}{u.classroom ? ` · класс «${u.classroom}»` : ''} · регистрация {dt(u.createdAt)} · был(а) {dt(u.lastActiveDate)}</Muted>
       <Muted>Опыт {u.xp} · монеты {u.coins} · серия {u.dayStreak} · ответов {u.attempts} (верных {u.correct}) · почта {u.emailVerified ? 'подтверждена' : 'не подтверждена'}{u.blocked ? ' · ЗАБЛОКИРОВАН' : ''}</Muted>
       {u.links.map((l, i) => <Muted key={i}>Связь: {l.name} ({ROLE_RU[l.role as Role] ?? l.role}, {l.email})</Muted>)}
+      {u.role === 'student' && (
+        <>
+          <Text style={{ fontWeight: '700', marginTop: 6, color: colors.text }}>
+            Безлимит: {u.subscriptionUntil ? (new Date(u.subscriptionUntil).getFullYear() >= 2100 ? 'навсегда' : `до ${dt(u.subscriptionUntil)}`) : 'нет (действует дневной лимит)'}
+          </Text>
+          <Row style={{ flexWrap: 'wrap', gap: 6, marginVertical: 6 }}>
+            <Chip label="+7 дней" onPress={() => run(() => api.adminGrant(u.id, 7), 'Безлимит продлён на 7 дней')} />
+            <Chip label="+30 дней" onPress={() => run(() => api.adminGrant(u.id, 30), 'Безлимит продлён на 30 дней')} />
+            <Chip label="+365 дней" onPress={() => run(() => api.adminGrant(u.id, 365), 'Безлимит продлён на год')} />
+            <Chip label="Навсегда" onPress={() => ask('Включить безлимит навсегда?', () => run(() => api.adminGrant(u.id, 0), 'Безлимит навсегда'))} />
+            {u.subscriptionUntil && <Chip label="Снять безлимит" onPress={() => ask('Снять безлимит?', () => run(() => api.adminRevoke(u.id), 'Безлимит снят'))} />}
+          </Row>
+        </>
+      )}
       <ErrorText text={err} />
       <InfoText text={info} />
       {!self && (
