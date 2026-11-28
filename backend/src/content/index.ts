@@ -14,7 +14,9 @@ import { russianTopics } from './russian';
 import { worldTopics } from './world';
 import { examTopics } from './exams';
 import { examTopics2 } from './exams2';
-import { THEORY } from './theory';
+import { THEORY as THEORY_A } from './theory';
+import { THEORY2 } from './theory2';
+const THEORY: Record<string, string> = { ...THEORY_A, ...THEORY2 };
 import { autoExplain } from './explain';
 
 export * from './types';

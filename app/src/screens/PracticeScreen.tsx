@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AnswerResult, api, ApiError, errMsg, NextTask, Topic } from '../api';
 import { HeroPic, RichText } from '../Art';
@@ -9,6 +10,30 @@ import { Button, Card, colors, ErrorText, Field, Muted, Row, Screen, Title } fro
  * «Проигрыватель» заданий. Задание приходит как данные (тип, текст, варианты),
  * поэтому один и тот же экран работает на сайте, iOS и Android.
  */
+/** Красивая карточка теории: абзацы, списки, выделенный «Совет/Запомни». */
+function TheoryCard({ text, hero }: { text: string; hero: ReturnType<typeof useHero> }) {
+  return (
+    <Card>
+      <Row style={{ alignItems: 'center', marginBottom: 6 }}>
+        <HeroPic hero={hero} pose="book" size={64} />
+        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.primaryDark, marginLeft: 10, flex: 1 }}>📖 Это нужно знать</Text>
+      </Row>
+      {text.split('\n\n').map((block, i) => {
+        const tip = /^(Совет|Запомни|Важно|Лайфхак)/.test(block.trim());
+        return (
+          <View key={i} style={tip ? { backgroundColor: '#FFF4D6', borderRadius: 14, padding: 12, marginVertical: 6 } : { marginBottom: 8 }}>
+            {block.split('\n').map((line, j) => (
+              <RichText key={j} style={{ fontSize: 16, lineHeight: 25, color: colors.text, fontWeight: tip && j === 0 ? '700' : '400' }}>
+                {line}
+              </RichText>
+            ))}
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
 export default function PracticeScreen({
   topic,
   homeworkId,
@@ -31,9 +56,25 @@ export default function PracticeScreen({
   const [done, setDone] = useState(0);
   const [theory, setTheory] = useState<string | null>(null);
   const [showTheory, setShowTheory] = useState(false);
+  const [intro, setIntro] = useState(false); // первый заход в тему: сначала теория, потом задания
   useEffect(() => {
-    api.theory(topic.id).then((r) => setTheory(r.theory)).catch(() => undefined);
+    api
+      .theory(topic.id)
+      .then(async (r) => {
+        setTheory(r.theory);
+        if (!r.theory) return;
+        try {
+          if (!(await AsyncStorage.getItem(`theory_seen_${topic.id}`))) setIntro(true);
+        } catch {
+          /* без хранилища просто не показываем автоматически */
+        }
+      })
+      .catch(() => undefined);
   }, [topic.id]);
+  const closeIntro = () => {
+    setIntro(false);
+    AsyncStorage.setItem(`theory_seen_${topic.id}`, '1').catch(() => undefined);
+  };
   const [right, setRight] = useState(0);
   const hero = useHero();
 
@@ -80,6 +121,18 @@ export default function PracticeScreen({
   const task = item?.task;
   const long = (task?.prompt.length ?? 0) > 40;
 
+  if (intro && theory) {
+    return (
+      <Screen>
+        <Button kind="secondary" title="← К темам" onPress={onClose} />
+        <Title>{topic.title}</Title>
+        <Muted>Сначала разберёмся, потом потренируемся 🚀</Muted>
+        <TheoryCard text={theory} hero={hero} />
+        <Button title="Понятно, к заданиям →" onPress={closeIntro} />
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <Button kind="secondary" title="← К темам" onPress={onClose} />
@@ -87,13 +140,7 @@ export default function PracticeScreen({
       {theory ? (
         <>
           <Button kind="secondary" title={showTheory ? 'Скрыть теорию' : '📖 Теория по теме'} onPress={() => setShowTheory(!showTheory)} />
-          {showTheory && (
-            <Card>
-              {theory.split('\n\n').map((p, i) => (
-                <Text key={i} style={{ fontSize: 16, lineHeight: 24, color: colors.text, marginBottom: 10 }}>{p}</Text>
-              ))}
-            </Card>
-          )}
+          {showTheory && <TheoryCard text={theory} hero={hero} />}
         </>
       ) : null}
       {done > 0 && (
