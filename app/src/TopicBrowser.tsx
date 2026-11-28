@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SubjectIcon } from './Art';
 import { api, Catalog, errMsg, Topic } from './api';
 import { Card, Chip, colors, ErrorText, Muted, Row } from './ui';
@@ -22,6 +22,7 @@ export default function TopicBrowser({
   const [error, setError] = useState('');
   const [subject, setSubject] = useState<string | null>(subjectFilter ?? null);
   const [grade, setGrade] = useState<number | null>(initialGrade ?? null);
+  const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | 'regular' | 'vpr' | 'oge' | 'ege'>('all');
 
   useEffect(() => {
@@ -37,21 +38,32 @@ export default function TopicBrowser({
     return cat.subjects.filter((s) => cat.topics.some((t) => t.subject === s.key && (grade === null || t.grade === grade) && (kind === 'all' || examKind(t) === kind)));
   }, [cat, grade, kind]);
 
+  const q = query.trim().toLowerCase();
   const list = useMemo(() => {
     if (!cat) return [];
+    // Поиск идёт по всем темам: по названию, блоку и предмету (фильтры класса и предмета не мешают).
+    if (q) {
+      const words = q.split(/\s+/);
+      return cat.topics
+        .filter((t) => {
+          const hay = `${t.title} ${t.block ?? ''} ${cat.subjects.find((x) => x.key === t.subject)?.title ?? ''}`.toLowerCase();
+          return words.every((w) => hay.includes(w));
+        })
+        .slice(0, 60);
+    }
     return cat.topics.filter((t) => (!subject || t.subject === subject) && (grade === null || t.grade === grade) && (kind === 'all' || examKind(t) === kind));
-  }, [cat, subject, grade, kind]);
+  }, [cat, subject, grade, kind, q]);
 
   // Группировка по блокам (порядок — по первому появлению, внутри блока — по классу).
   const groups = useMemo(() => {
     const g = new Map<string, Topic[]>();
     for (const t of list) {
-      const key = subject || subjectFilter ? t.block ?? '' : '';
+      const key = !q && (subject || subjectFilter) ? t.block ?? '' : '';
       if (!g.has(key)) g.set(key, []);
       g.get(key)!.push(t);
     }
     return [...g.entries()].map(([k, v]) => [k, v.sort((a, b) => a.grade - b.grade)] as [string, Topic[]]);
-  }, [list, subject, subjectFilter]);
+  }, [list, subject, subjectFilter, q]);
 
   if (error) return <ErrorText text={error} />;
   if (!cat) return <ActivityIndicator size="large" color={colors.primary} />;
@@ -60,6 +72,20 @@ export default function TopicBrowser({
 
   return (
     <View>
+      <View style={s.search}>
+        <Text style={{ fontSize: 18, marginRight: 8 }}>🔎</Text>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Найти тему: например, дроби, глагол, клетка"
+          placeholderTextColor={colors.muted}
+          style={{ flex: 1, fontSize: 16, color: colors.text, paddingVertical: 10 }}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {query ? <Text onPress={() => setQuery('')} style={{ fontSize: 20, color: colors.muted, paddingHorizontal: 6 }}>✕</Text> : null}
+      </View>
+      {q ? <Muted>Найдено тем: {list.length}</Muted> : null}
       <Muted>Что нужно</Muted>
       <Row style={{ marginBottom: 10 }}>
         <Chip label="Все темы" active={kind === 'all'} onPress={() => setKind('all')} />
@@ -127,6 +153,7 @@ const s = StyleSheet.create({
   icon: { fontSize: 28 },
   title: { fontSize: 16, fontWeight: '700', color: colors.text },
   sub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  search: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, borderWidth: 2, borderColor: colors.primary, paddingHorizontal: 12, marginBottom: 12 },
   block: { fontSize: 15, fontWeight: '800', color: colors.primaryDark, marginTop: 14, marginBottom: 6 },
   level: { fontSize: 12, fontWeight: '700', color: colors.primary },
 });

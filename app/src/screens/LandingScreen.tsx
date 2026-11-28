@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { HeroPic, Icon, Scene } from '../Art';
+import { HeroPic, Icon, Scene, SubjectIcon } from '../Art';
 import InstallCard from '../InstallCard';
 import { BRAND, SUBJECT_INFO } from '../config';
 import { Button, Card, colors, Heading, Muted, Row, Screen } from '../ui';
@@ -92,8 +92,8 @@ export default function LandingScreen({ onStart, onInfo }: { onStart: (mode: 'lo
       <Row style={{ marginBottom: 8, gap: 10 }}>
         {SUBJECT_INFO.map((x) => (
           <View key={x.title} style={s.subject}>
-            <View style={[s.subjectIcon, { backgroundColor: x.color }]}>
-              <Text style={{ fontSize: 22 }}>{x.emoji}</Text>
+            <View style={[s.subjectIcon, { backgroundColor: '#fff', borderWidth: 3, borderColor: x.color }]}>
+              <SubjectIcon title={x.title} fallback={x.emoji} size={34} />
             </View>
             <Text style={s.subjectTitle}>{x.title}</Text>
             <View style={s.tag}>

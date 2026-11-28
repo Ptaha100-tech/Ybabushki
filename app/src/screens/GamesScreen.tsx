@@ -22,53 +22,45 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
   if (game === 'balloons' || game === 'truefalse' || game === 'baskets' || game === 'count') return <KidGame mode={game} subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
   if (game === 'memory') return <Memory subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
 
+  const card = (icon: React.ReactNode, title: string, text: string, g: Game) => (
+    <Card key={title}>
+      <Row style={{ flexWrap: 'nowrap' }}>{icon}<Heading>{title}</Heading></Row>
+      <Muted>{text}</Muted>
+      <Button title="Играть" onPress={() => setGame(g)} />
+    </Card>
+  );
+  const kids = (
+    <View key="kids">
+      <Heading>🧒 Малышам: слова, счёт и порядок</Heading>
+      <Muted>Яркие игры с картинками для 1–4 классов.</Muted>
+      {card(null, '🔤 Собери слово', 'Посмотри на картинку и собери слово из букв. Нажимай буквы по порядку!', 'words')}
+      {card(null, '🧺 Разложи по корзинкам', 'Животные или растения? Фрукты или овощи? Выбери, в какую корзинку положить.', 'baskets')}
+      {card(null, '🍎 Считаем картинки', 'Посчитай яблоки, звёздочки и рыбок: сколько всего и сколько осталось?', 'count')}
+    </View>
+  );
+  const know = (
+    <View key="know">
+      <Heading>🧠 Знания по школьным предметам</Heading>
+      <Muted>Вопросы берутся из выбранного предмета и твоего класса. Предмет:</Muted>
+      <Row style={{ marginBottom: 12 }}>
+        <Chip label="Любой" active={!subject} onPress={() => setSubject(undefined)} />
+        {subjects.map((x) => (
+          <Chip key={x.key} label={`${x.emoji} ${x.title}`} active={subject === x.key} onPress={() => setSubject(x.key)} />
+        ))}
+      </Row>
+      {card(<Icon name="bulb" size={40} />, 'Молния', '60 секунд. Отвечай на вопросы как можно быстрее. Серия верных ответов даёт бонус!', 'lightning')}
+      {card(<Icon name="magnifier" size={40} />, 'Найди пару', 'Переворачивай карточки и находи пары: понятие и его значение. Чем меньше ходов, тем больше XP.', 'memory')}
+      {card(null, '🎈 Лопни шарик', 'Прочитай вопрос и лопни шарик с верным ответом. У тебя 3 жизни ❤️.', 'balloons')}
+      {card(null, '👍 Правда или неправда?', 'Прочитай утверждение и реши: правда это или нет.', 'truefalse')}
+    </View>
+  );
+  const young = (grade ?? 5) <= 4;
   return (
     <Screen>
       <Button kind="secondary" title="← Назад" onPress={onClose} />
       <Title>🎮 Игры</Title>
       <Muted>Игры дают опыт (XP), но не тратят бесплатный лимит заданий. За день можно получить до 100 XP за игры.</Muted>
-      <Muted>Предмет для игр:</Muted>
-      <Row style={{ marginBottom: 12 }}>
-        <Chip label="Любой" active={!subject} onPress={() => setSubject(undefined)} />
-        {subjects.map((s) => (
-          <Chip key={s.key} label={`${s.emoji} ${s.title}`} active={subject === s.key} onPress={() => setSubject(s.key)} />
-        ))}
-      </Row>
-      <Card>
-        <Heading>🔤 Собери слово</Heading>
-        <Muted>Посмотри на картинку и собери слово из букв. Нажимай буквы по порядку!</Muted>
-        <Button title="Играть" onPress={() => setGame('words')} />
-      </Card>
-      <Card>
-        <Heading>🧺 Разложи по корзинкам</Heading>
-        <Muted>Животные или растения? Фрукты или овощи? Выбери, в какую корзинку положить.</Muted>
-        <Button title="Играть" onPress={() => setGame('baskets')} />
-      </Card>
-      <Card>
-        <Heading>🍎 Считаем картинки</Heading>
-        <Muted>Посчитай яблоки, звёздочки и рыбок: сколько всего и сколько осталось?</Muted>
-        <Button title="Играть" onPress={() => setGame('count')} />
-      </Card>
-      <Card>
-        <Heading>🎈 Лопни шарик</Heading>
-        <Muted>Прочитай вопрос и лопни шарик с верным ответом. У тебя 3 жизни ❤️ — ошибайся осторожно!</Muted>
-        <Button title="Играть" onPress={() => setGame('balloons')} />
-      </Card>
-      <Card>
-        <Heading>👍 Правда или неправда?</Heading>
-        <Muted>Прочитай утверждение и реши: правда это или нет. Серия верных ответов приносит больше звёзд!</Muted>
-        <Button title="Играть" onPress={() => setGame('truefalse')} />
-      </Card>
-      <Card>
-        <Row style={{ flexWrap: 'nowrap' }}><Icon name="bulb" size={40} /><Heading>Молния</Heading></Row>
-        <Muted>60 секунд. Отвечай на вопросы как можно быстрее. Серия верных ответов даёт бонус!</Muted>
-        <Button title="Играть" onPress={() => setGame('lightning')} />
-      </Card>
-      <Card>
-        <Row style={{ flexWrap: 'nowrap' }}><Icon name="magnifier" size={40} /><Heading>Найди пару</Heading></Row>
-        <Muted>Переворачивай карточки и находи пары: понятие и его значение. Чем меньше ходов, тем больше XP.</Muted>
-        <Button title="Играть" onPress={() => setGame('memory')} />
-      </Card>
+      {young ? [kids, know] : [know, kids]}
     </Screen>
   );
 }

@@ -10,7 +10,7 @@ export const SUBJECT_INFO = [
   { emoji: '🔢', title: 'Математика', grades: '1–11', color: '#4F46E5' },
   { emoji: '📝', title: 'Русский язык', grades: '1–11', color: '#DC2626' },
   { emoji: '📖', title: 'Литература', grades: '5–11', color: '#9333EA' },
-  { emoji: '🇬🇧', title: 'Английский язык', grades: '2–11', color: '#0284C7' },
+  { emoji: '🔤', title: 'Английский язык', grades: '2–11', color: '#0284C7' },
   { emoji: '🌳', title: 'Окружающий мир', grades: '1–4', color: '#16A34A' },
   { emoji: '🧬', title: 'Биология', grades: '5–11', color: '#15803D' },
   { emoji: '🌍', title: 'География', grades: '5–11', color: '#0D9488' },

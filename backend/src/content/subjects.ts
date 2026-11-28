@@ -13,7 +13,7 @@ export const SUBJECTS: SubjectMeta[] = [
   { key: 'math', title: 'Математика', emoji: '🔢', color: '#4F46E5', fromGrade: 1, toGrade: 11 },
   { key: 'russian', title: 'Русский язык', emoji: '📝', color: '#DC2626', fromGrade: 1, toGrade: 11 },
   { key: 'literature', title: 'Литература', emoji: '📖', color: '#9333EA', fromGrade: 5, toGrade: 11 },
-  { key: 'english', title: 'Английский язык', emoji: '🇬🇧', color: '#0284C7', fromGrade: 2, toGrade: 11 },
+  { key: 'english', title: 'Английский язык', emoji: '🔤', color: '#0284C7', fromGrade: 2, toGrade: 11 },
   { key: 'world', title: 'Окружающий мир', emoji: '🌳', color: '#16A34A', fromGrade: 1, toGrade: 4 },
   { key: 'biology', title: 'Биология', emoji: '🧬', color: '#15803D', fromGrade: 5, toGrade: 11 },
   { key: 'geography', title: 'География', emoji: '🌍', color: '#0D9488', fromGrade: 5, toGrade: 11 },
