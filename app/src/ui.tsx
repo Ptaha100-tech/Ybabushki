@@ -1,4 +1,5 @@
 import { RichText } from './Art';
+import { colors, T } from './theme';
 import React from 'react';
 import {
   Pressable,
@@ -13,23 +14,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
-export const colors = {
-  bg: '#F3F9FE',
-  card: '#FFFFFF',
-  primary: '#339DDA',
-  primaryDark: '#2480B8',
-  primarySoft: '#E6F3FD',
-  cta: '#FD7124',
-  dark: '#242424',
-  text: '#242424',
-  muted: '#5F6B76',
-  good: '#16A34A',
-  goodBg: '#DCFCE7',
-  bad: '#DC2626',
-  badBg: '#FEE2E2',
-  border: '#D6E7F5',
-  accent: '#FD7124',
-};
+export { colors };
 
 export function Screen({ children }: { children: React.ReactNode }) {
   return (
@@ -85,7 +70,7 @@ export function Button({
 export function Chip({ label, active, onPress }: { label: string; active?: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={[s.chip, active && s.chipActive]}>
-      <RichText style={[s.chipText, active && { color: '#fff' }]}>{label}</RichText>
+      <RichText style={[s.chipText, active && { color: T.btnText }]}>{label}</RichText>
     </Pressable>
   );
 }
@@ -114,28 +99,29 @@ export function Row({ children, style }: { children: React.ReactNode; style?: St
 const s = StyleSheet.create({
   screen: { padding: 16, paddingTop: 32, alignItems: 'center' },
   column: { width: '100%', maxWidth: 720 },
-  title: { fontSize: 26, fontWeight: '800', color: colors.text, marginBottom: 12 },
+  title: { fontSize: 26, fontWeight: String(T.titleWeight) as any, color: colors.text, marginBottom: 12 },
   heading: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 16, marginBottom: 8 },
   muted: { color: colors.muted, fontSize: 14, marginBottom: 6 },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 22,
-    padding: 18,
+    borderRadius: T.cardRadius,
+    padding: T.cardPad,
     marginBottom: 12,
-    borderWidth: 1,
+    borderWidth: T.cardBorder,
     borderColor: colors.border,
+    ...(T.cardShadow ? ({ boxShadow: '0 6px 18px rgba(0,0,0,0.12)', elevation: 3 } as any) : {}),
   },
-  button: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 16, alignItems: 'center', marginVertical: 4 },
+  button: { paddingVertical: T.btnPadY, paddingHorizontal: 20, borderRadius: T.btnRadius, alignItems: 'center', marginVertical: 4, ...(T.btnShadow ? ({ boxShadow: '0 5px 0 rgba(0,0,0,0.18)', elevation: 3 } as any) : {}) },
   buttonPrimary: { backgroundColor: colors.cta },
   buttonSecondary: { backgroundColor: colors.primarySoft },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonText: { color: T.btnText, fontWeight: '700', fontSize: T.btnFont },
   chip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 999,
+    borderRadius: T.chipRadius,
     borderWidth: 1.5,
     borderColor: colors.primary,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { color: colors.primaryDark, fontWeight: '600' },
@@ -146,7 +132,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     padding: 13,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     color: colors.text,
   },
   error: { color: colors.bad, marginVertical: 8 },

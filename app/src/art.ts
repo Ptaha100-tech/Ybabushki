@@ -44,3 +44,8 @@ export function useArtTick() {
     };
   }, []);
 }
+
+/** Адрес загруженной картинки-фона (слот bg:*). */
+export function bgUri(key: string): string | undefined {
+  return overrides[key]?.uri;
+}

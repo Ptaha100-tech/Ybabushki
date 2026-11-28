@@ -2,17 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, Text, View } from 'react-native';
 import { AdminStats, AdminTopic, AdminUserDetail, AdminUserRow, api, errMsg, Role, User } from '../api';
 import { artSrc, loadArt, overriddenKeys } from '../art';
+import { DEFAULT_THEME, ensureFont, FONTS, PRESETS, saveThemeCache, T, Theme } from '../theme';
 import { HERO_NAMES, HeroKey, heroImg, ICONS, SCENES } from '../heroes';
 import { assetToDataUri, downloadDataUri, isWebEnv, pickImageFile, removeBackground, toPngDataUri } from '../imgtools';
 import { Button, Card, Chip, colors, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
-type Tab = 'stats' | 'users' | 'topics' | 'mail' | 'img';
+type Tab = 'stats' | 'users' | 'topics' | 'mail' | 'img' | 'design';
 const TABS: { k: Tab; t: string }[] = [
   { k: 'stats', t: 'Обзор' },
   { k: 'users', t: 'Люди' },
   { k: 'topics', t: 'Темы' },
   { k: 'mail', t: 'Рассылка' },
   { k: 'img', t: '🎨 Картинки' },
+  { k: 'design', t: '🖌 Дизайн' },
 ];
 const ROLE_RU: Record<Role, string> = { student: 'Ученик', teacher: 'Учитель', parent: 'Родитель', admin: 'Админ' };
 const fmt = (n: number) => n.toLocaleString('ru-RU');
@@ -283,13 +285,13 @@ const POSES = ['wave', 'point', 'book', 'think', 'idea', 'thumbs', 'shrug', 'wri
 
 /** Выбор места в сервисе, куда поставить картинку. */
 function SlotPicker({ uri, onDone }: { uri: string; onDone: (msg: string) => void }) {
-  const [group, setGroup] = useState<'hero' | 'icon' | 'scene'>('hero');
+  const [group, setGroup] = useState<'hero' | 'icon' | 'scene' | 'bg'>('hero');
   const [hero, setHero] = useState<HeroKey>('boy');
   const [busy, setBusy] = useState(false);
   const [, tick] = useState(0);
   const done = overriddenKeys();
   const keys: string[] =
-    group === 'hero' ? POSES.map((p) => `hero:${hero}:${p}`) : group === 'icon' ? Object.keys(ICONS).map((k) => `icon:${k}`) : Object.keys(SCENES).map((k) => `scene:${k}`);
+    group === 'hero' ? POSES.map((p) => `hero:${hero}:${p}`) : group === 'icon' ? Object.keys(ICONS).map((k) => `icon:${k}`) : group === 'bg' ? ['bg:site'] : Object.keys(SCENES).map((k) => `scene:${k}`);
 
   const put = async (key: string) => {
     setBusy(true);
@@ -323,6 +325,7 @@ function SlotPicker({ uri, onDone }: { uri: string; onDone: (msg: string) => voi
         <Chip label="Герои" active={group === 'hero'} onPress={() => setGroup('hero')} />
         <Chip label="Значки" active={group === 'icon'} onPress={() => setGroup('icon')} />
         <Chip label="Сцены" active={group === 'scene'} onPress={() => setGroup('scene')} />
+        <Chip label="Фон сайта" active={group === 'bg'} onPress={() => setGroup('bg')} />
       </Row>
       {group === 'hero' && (
         <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
@@ -333,7 +336,7 @@ function SlotPicker({ uri, onDone }: { uri: string; onDone: (msg: string) => voi
       <Row style={{ flexWrap: 'wrap', gap: 8 }}>
         {keys.map((k) => {
           const [kind, a, b] = k.split(':');
-          const fb = kind === 'hero' ? heroImg(a as HeroKey, b as any) : kind === 'icon' ? (ICONS as any)[a] : (SCENES as any)[a];
+          const fb = kind === 'bg' ? undefined : kind === 'hero' ? heroImg(a as HeroKey, b as any) : kind === 'icon' ? (ICONS as any)[a] : (SCENES as any)[a];
           const on = done.includes(k);
           return (
             <View key={k} style={{ width: 84, alignItems: 'center' }}>
@@ -486,6 +489,200 @@ function VideoLab() {
   );
 }
 
+/** Выбор цвета: на сайте — палитра, плюс поле для кода. */
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <Row style={{ marginBottom: 6, justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+      <Text style={{ color: colors.text, flex: 1 }}>{label}</Text>
+      {isWebEnv && React.createElement('input', { type: 'color', value, onChange: (e: any) => onChange(e.target.value), style: { width: 44, height: 32, border: 'none', background: 'none', padding: 0 } })}
+      <View style={{ width: 96 }}>
+        <Field value={value} onChangeText={(v) => /^#[0-9a-fA-F]{0,6}$/.test(v) && onChange(v)} autoCapitalize="none" style={{ padding: 6, fontSize: 14 }} />
+      </View>
+    </Row>
+  );
+}
+
+/** Число с кнопками − и +. */
+function Stepper({ label, value, min, max, step, onChange, fmt }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; fmt?: (v: number) => string }) {
+  const set = (v: number) => onChange(Math.round(Math.min(max, Math.max(min, v)) * 100) / 100);
+  return (
+    <Row style={{ marginBottom: 6, justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+      <Text style={{ color: colors.text, flex: 1 }}>{label}</Text>
+      <Chip label="−" onPress={() => set(value - step)} />
+      <Text style={{ minWidth: 46, textAlign: 'center', fontWeight: '700', color: colors.text }}>{fmt ? fmt(value) : value}</Text>
+      <Chip label="＋" onPress={() => set(value + step)} />
+    </Row>
+  );
+}
+
+const DESIGN_BLOCKS = ['🎁 Готовые темы', '🎨 Цвета', '🌄 Фон сайта', '🔘 Кнопки', '🪟 Окна и карточки', '🔤 Шрифт'] as const;
+
+/** Редактор оформления всего сайта по блокам, с предпросмотром. */
+function DesignLab() {
+  const [d, setD] = useState<Theme>({ ...T });
+  const [open, setOpen] = useState<string>(DESIGN_BLOCKS[0]);
+  const [err, setErr] = useState('');
+  const [info, setInfo] = useState('');
+  const [busy, setBusy] = useState(false);
+  const up = <K extends keyof Theme>(k: K, v: Theme[K]) => setD((x) => ({ ...x, [k]: v }));
+  const web = isWebEnv;
+  useEffect(() => {
+    if (d.font) ensureFont(d.font);
+  }, [d.font]);
+
+  const save = async () => {
+    setBusy(true); setErr(''); setInfo('');
+    try {
+      await api.adminThemeSet(d);
+      saveThemeCache(await api.theme());
+      setInfo('✅ Сохранено. Страница перезагрузится…');
+      if (web) setTimeout(() => location.reload(), 600);
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+    setBusy(false);
+  };
+  const reset = async () => {
+    setBusy(true); setErr('');
+    try {
+      await api.adminThemeReset();
+      saveThemeCache({});
+      setInfo('Возвращено исходное оформление. Страница перезагрузится…');
+      if (web) setTimeout(() => location.reload(), 600);
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+    setBusy(false);
+  };
+
+  const bgStyle: any =
+    d.bgMode === 'gradient' ? { backgroundImage: `linear-gradient(${d.bgAngle}deg, ${d.bg}, ${d.bg2})` } : { backgroundColor: d.bg };
+  const ff: any = d.font ? { fontFamily: `"${d.font}", system-ui, sans-serif` } : {};
+
+  return (
+    <>
+      <Card>
+        <Heading>🖌 Дизайн сайта</Heading>
+        <Muted>Меняйте оформление по блокам. Внизу — предпросмотр. Когда нравится — «Сохранить»: сайт у всех сразу получит новый вид. Картинку для фона загрузите в «Картинки» → «Поставить на сервис» → «Фон сайта», затем выберите здесь «Картинка».</Muted>
+      </Card>
+
+      {/* предпросмотр */}
+      <View style={[{ borderRadius: 18, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#0002' }, bgStyle, ff]}>
+        <Text style={[{ fontSize: 22, color: d.text, marginBottom: 8, fontWeight: String(d.titleWeight) as any }, ff]}>Так будет выглядеть заголовок</Text>
+        <View style={[{ backgroundColor: d.card, borderRadius: d.cardRadius, padding: d.cardPad, borderWidth: d.cardBorder, borderColor: d.border }, d.cardShadow ? ({ boxShadow: '0 6px 18px rgba(0,0,0,0.15)' } as any) : null]}>
+          <Text style={[{ color: d.text, fontWeight: '700', fontSize: 17 }, ff]}>Окно с заданием</Text>
+          <Text style={[{ color: d.muted, marginVertical: 6 }, ff]}>Сколько будет 7 × 8? Подумай и выбери ответ.</Text>
+          <Row style={{ gap: 6, marginBottom: 8 }}>
+            {['54', '56', '64'].map((x, i) => (
+              <View key={x} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: d.chipRadius, borderWidth: 1.5, borderColor: d.primary, backgroundColor: i === 1 ? d.primary : d.card }}>
+                <Text style={[{ color: i === 1 ? d.btnText : d.primaryDark, fontWeight: '600' }, ff]}>{x}</Text>
+              </View>
+            ))}
+          </Row>
+          <View style={[{ backgroundColor: d.cta, paddingVertical: d.btnPadY, borderRadius: d.btnRadius, alignItems: 'center' }, d.btnShadow ? ({ boxShadow: '0 5px 0 rgba(0,0,0,0.18)' } as any) : null]}>
+            <Text style={[{ color: d.btnText, fontWeight: '700', fontSize: d.btnFont }, ff]}>Проверить</Text>
+          </View>
+          <View style={{ backgroundColor: d.primarySoft, paddingVertical: d.btnPadY, borderRadius: d.btnRadius, alignItems: 'center', marginTop: 8 }}>
+            <Text style={[{ color: d.primary, fontWeight: '700', fontSize: d.btnFont }, ff]}>Не сейчас</Text>
+          </View>
+          <Row style={{ marginTop: 8, gap: 8 }}>
+            <Text style={[{ color: d.good, fontWeight: '700' }, ff]}>✔ Верно!</Text>
+            <Text style={[{ color: d.bad, fontWeight: '700' }, ff]}>✖ Ошибка</Text>
+          </Row>
+        </View>
+      </View>
+
+      {DESIGN_BLOCKS.map((b) => (
+        <Card key={b}>
+          <Text onPress={() => setOpen(open === b ? '' : b)} style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{open === b ? '▾ ' : '▸ '}{b}</Text>
+          {open === b && b === DESIGN_BLOCKS[0] && (
+            <>
+              <Muted>Нажмите — всё оформление заменится целиком. Потом можно подправить по блокам.</Muted>
+              <Row style={{ gap: 6 }}>
+                {PRESETS.map((p) => <Chip key={p.name} label={p.name} onPress={() => setD({ ...DEFAULT_THEME, ...p.theme })} />)}
+              </Row>
+            </>
+          )}
+          {open === b && b === DESIGN_BLOCKS[1] && (
+            <View style={{ marginTop: 8 }}>
+              <ColorField label="Основной (синий)" value={d.primary} onChange={(v) => up('primary', v)} />
+              <ColorField label="Основной, тёмный (текст на светлом)" value={d.primaryDark} onChange={(v) => up('primaryDark', v)} />
+              <ColorField label="Основной, светлый (вторые кнопки)" value={d.primarySoft} onChange={(v) => up('primarySoft', v)} />
+              <ColorField label="Главная кнопка (оранжевая)" value={d.cta} onChange={(v) => up('cta', v)} />
+              <ColorField label="Текст на кнопках" value={d.btnText} onChange={(v) => up('btnText', v)} />
+              <ColorField label="Текст" value={d.text} onChange={(v) => up('text', v)} />
+              <ColorField label="Подписи (серый текст)" value={d.muted} onChange={(v) => up('muted', v)} />
+              <ColorField label="Окна и карточки" value={d.card} onChange={(v) => up('card', v)} />
+              <ColorField label="Рамки" value={d.border} onChange={(v) => up('border', v)} />
+              <ColorField label="Верно (зелёный)" value={d.good} onChange={(v) => up('good', v)} />
+              <ColorField label="Ошибка (красный)" value={d.bad} onChange={(v) => up('bad', v)} />
+            </View>
+          )}
+          {open === b && b === DESIGN_BLOCKS[2] && (
+            <View style={{ marginTop: 8 }}>
+              <Row style={{ gap: 6, marginBottom: 8 }}>
+                <Chip label="Один цвет" active={d.bgMode === 'color'} onPress={() => up('bgMode', 'color')} />
+                <Chip label="Плавный переход" active={d.bgMode === 'gradient'} onPress={() => up('bgMode', 'gradient')} />
+                <Chip label="Картинка" active={d.bgMode === 'image'} onPress={() => up('bgMode', 'image')} />
+              </Row>
+              <ColorField label="Цвет фона" value={d.bg} onChange={(v) => up('bg', v)} />
+              {d.bgMode === 'gradient' && (
+                <>
+                  <ColorField label="Второй цвет перехода" value={d.bg2} onChange={(v) => up('bg2', v)} />
+                  <Stepper label="Направление (градусы)" value={d.bgAngle} min={0} max={360} step={30} onChange={(v) => up('bgAngle', v)} />
+                </>
+              )}
+              {d.bgMode === 'image' && <Muted>Картинка берётся из «Картинки» → «Поставить на сервис» → «Фон сайта». Цвет выше виден, пока она грузится. Картинка-фон показывается только на сайте.</Muted>}
+            </View>
+          )}
+          {open === b && b === DESIGN_BLOCKS[3] && (
+            <View style={{ marginTop: 8 }}>
+              <Stepper label="Скругление углов" value={d.btnRadius} min={0} max={40} step={4} onChange={(v) => up('btnRadius', v)} />
+              <Stepper label="Высота кнопки" value={d.btnPadY} min={6} max={26} step={2} onChange={(v) => up('btnPadY', v)} />
+              <Stepper label="Размер текста" value={d.btnFont} min={12} max={24} step={1} onChange={(v) => up('btnFont', v)} />
+              <Stepper label="Скругление «таблеток»" value={Math.min(d.chipRadius, 40)} min={0} max={40} step={4} onChange={(v) => up('chipRadius', v)} />
+              <Row style={{ gap: 6 }}>
+                <Chip label={d.btnShadow ? '✓ Объёмные (с тенью)' : 'Плоские'} active={d.btnShadow} onPress={() => up('btnShadow', !d.btnShadow)} />
+              </Row>
+            </View>
+          )}
+          {open === b && b === DESIGN_BLOCKS[4] && (
+            <View style={{ marginTop: 8 }}>
+              <Stepper label="Скругление углов" value={d.cardRadius} min={0} max={44} step={4} onChange={(v) => up('cardRadius', v)} />
+              <Stepper label="Толщина рамки" value={d.cardBorder} min={0} max={6} step={1} onChange={(v) => up('cardBorder', v)} />
+              <Stepper label="Отступ внутри" value={d.cardPad} min={8} max={32} step={2} onChange={(v) => up('cardPad', v)} />
+              <Row style={{ gap: 6 }}>
+                <Chip label={d.cardShadow ? '✓ С тенью' : 'Без тени'} active={d.cardShadow} onPress={() => up('cardShadow', !d.cardShadow)} />
+              </Row>
+            </View>
+          )}
+          {open === b && b === DESIGN_BLOCKS[5] && (
+            <View style={{ marginTop: 8 }}>
+              {!web && <Muted>Шрифты работают только на сайте.</Muted>}
+              <Row style={{ gap: 6, marginBottom: 8 }}>
+                <Chip label="Системный" active={!d.font} onPress={() => up('font', '')} />
+                {Object.keys(FONTS).map((f) => <Chip key={f} label={f} active={d.font === f} onPress={() => up('font', f)} />)}
+              </Row>
+              <Stepper label="Жирность заголовков" value={d.titleWeight} min={400} max={900} step={100} onChange={(v) => up('titleWeight', v)} />
+              <Stepper label="Размер всего интерфейса" value={d.uiZoom} min={0.8} max={1.3} step={0.05} fmt={(v) => `${Math.round(v * 100)}%`} onChange={(v) => up('uiZoom', v)} />
+            </View>
+          )}
+        </Card>
+      ))}
+
+      <ErrorText text={err} />
+      <InfoText text={info} />
+      {busy ? <ActivityIndicator size="large" color={colors.primary} /> : (
+        <>
+          <Button title="💾 Сохранить и применить" onPress={save} />
+          <Button title="↩️ Вернуть исходный дизайн" kind="secondary" onPress={reset} />
+        </>
+      )}
+      <Muted>Меняется всё оформление сайта. Приложение для Android подхватывает цвета и шрифты при следующей сборке/запуске не полностью — основной упор на сайт.</Muted>
+    </>
+  );
+}
+
 function ImageLab() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [models, setModels] = useState<{ id: string; name: string }[]>([]);
@@ -628,6 +825,7 @@ export default function AdminScreen({ user, onLogout }: { user: User; onLogout: 
       {tab === 'topics' && <Topics />}
       {tab === 'mail' && <Mail />}
       {tab === 'img' && <><ImageLab /><VideoLab /></>}
+      {tab === 'design' && <DesignLab />}
       <View style={{ height: 16 }} />
       <Button title="Выйти" kind="secondary" onPress={onLogout} />
     </Screen>

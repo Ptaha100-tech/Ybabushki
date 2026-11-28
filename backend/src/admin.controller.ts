@@ -51,6 +51,9 @@ export class AdminController {
   @Post('art') artSet(@Body() d: ArtDto) { return this.art.set(d.key, d.data); }
   @Delete('art') artRemove(@Query('key') key: string) { return this.art.remove(key); }
 
+  @Post('theme') themeSet(@Body() d: Record<string, unknown>) { return this.art.setTheme(d ?? {}); }
+  @Delete('theme') themeReset() { return this.art.remove('cfg:theme'); }
+
   @Get('video/models') videoModels() { return this.images.videoModels(); }
   @Post('video') videoStart(@Body() d: VideoDto) { return this.images.videoStart(d); }
   @Get('video/:id') videoStatus(@Param('id') id: string) { return this.images.videoStatus(id); }

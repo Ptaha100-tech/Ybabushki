@@ -5,7 +5,8 @@ import { ActivityIndicator, View } from 'react-native';
 import { setGuideUser } from './src/heroes';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import { api, loadToken, setToken, User } from './src/api';
-import { loadArt } from './src/art';
+import { loadArt, bgUri } from './src/art';
+import { loadTheme, setBgImage } from './src/theme';
 import { loadSoundSettings } from './src/sound';
 import './src/install';
 import AdminScreen from './src/screens/AdminScreen';
@@ -46,7 +47,8 @@ export default function App() {
   useEffect(() => {
     (async () => {
       loadSoundSettings();
-      loadArt();
+      loadTheme();
+      loadArt().then(() => setBgImage(bgUri('bg:site') ?? ''));
       const token = await loadToken();
       if (token) {
         try {

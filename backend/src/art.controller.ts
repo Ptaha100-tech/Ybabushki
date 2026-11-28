@@ -11,6 +11,10 @@ export class ArtController {
     return this.art.list();
   }
 
+  @Get('theme') theme() {
+    return this.art.getTheme();
+  }
+
   @Get('img') async img(@Query('key') key: string, @Res() res: Response) {
     const a = await this.art.get(key);
     if (!a) throw new NotFoundException();

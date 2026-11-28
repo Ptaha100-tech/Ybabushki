@@ -205,6 +205,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const api = {
   mistakesCount: () => request<{ count: number }>('GET', '/me/mistakes'),
   nextMistake: (exclude?: string) => request<NextTask>('GET', `/me/mistakes/next${exclude ? `?exclude=${exclude}` : ''}`),
+  theme: () => request<Record<string, unknown>>('GET', '/art/theme'),
+  adminThemeSet: (t: unknown) => request<{ ok: boolean }>('POST', '/admin/theme', t),
+  adminThemeReset: () => request<{ ok: boolean }>('DELETE', '/admin/theme'),
   adminVideoModels: () => request<{ id: string; name: string }[]>('GET', '/admin/video/models'),
   adminVideoStart: (b: { prompt: string; model: string; duration?: number; aspectRatio?: string; resolution?: string; image?: string }) =>
     request<{ id: string }>('POST', '/admin/video', b),
