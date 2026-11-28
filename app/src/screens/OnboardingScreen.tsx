@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { HeroPic, Scene, RichText } from '../Art';
 import { HERO_NAMES, Pose, useHero } from '../heroes';
+import { SpeakButton } from '../SpeakButton';
+import { autoSpeak, play } from '../sound';
 import ProfileEditor from '../ProfileEditor';
 import { User } from '../api';
 import { BRAND } from '../config';
@@ -53,6 +55,10 @@ export default function OnboardingScreen({ user, onUser, onDone }: { user: User;
   const fill = (t: string) => t.replace('{name}', HERO_NAMES[hero]).replace('{brand}', BRAND);
   const last = i === steps.length - 1;
   const blocked = !!step.profile && !user.gender;
+  useEffect(() => {
+    autoSpeak(`${fill(step.title)}. ${fill(step.text)}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i]);
 
   return (
     <Screen>
@@ -78,11 +84,12 @@ export default function OnboardingScreen({ user, onUser, onDone }: { user: User;
       <Card style={s.bubble}>
         <Text style={s.title}>{fill(step.title)}</Text>
         <RichText style={s.text}>{fill(step.text)}</RichText>
+        <SpeakButton text={`${fill(step.title)}. ${fill(step.text)}`} label="🔊 Послушать" />
         {step.profile ? <ProfileEditor user={user} onChange={onUser} /> : null}
         {blocked && <Muted>Выберите пол, чтобы продолжить.</Muted>}
       </Card>
 
-      <Button title={last ? 'Начать' : 'Дальше'} onPress={() => (last ? onDone() : setI(i + 1))} disabled={blocked} />
+      <Button title={last ? 'Начать' : 'Дальше'} onPress={() => { play('click'); last ? onDone() : setI(i + 1); }} disabled={blocked} />
       {i > 0 && <Button kind="secondary" title="← Назад" onPress={() => setI(i - 1)} />}
     </Screen>
   );

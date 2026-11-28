@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { api, errMsg, LightningTask, SubjectMeta } from '../api';
 import { HeroPic, Icon, Scene, RichText } from '../Art';
 import { useHero } from '../heroes';
+import { play } from '../sound';
 import { KidTask, KID_WORDS, makeBasketTasks, makeCountTasks, shuffled } from '../kids';
 import { Button, Card, Chip, colors, ErrorText, Heading, Muted, Row, Screen, Title } from '../ui';
 
@@ -100,6 +101,7 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
   useEffect(() => {
     if (finished && !sent.current) {
       sent.current = true;
+      play('win');
       api.gameResult('lightning', score).then((r) => setAward(r.xp)).catch(() => setAward(0));
     }
   }, [finished, score]);
@@ -111,6 +113,7 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
     const norm = (x: string) => x.trim().replace(',', '.').toLowerCase();
     const ok = norm(given) === norm(task.answer) || (!Number.isNaN(Number(norm(given))) && norm(given) !== '' && Number(norm(given)) === Number(norm(task.answer)));
     setFlash(ok ? 'good' : 'bad');
+    play(ok ? 'correct' : 'wrong');
     if (ok) {
       const c = combo + 1;
       setCombo(c);
@@ -202,6 +205,7 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
   useEffect(() => {
     if (finished && !sent.current) {
       sent.current = true;
+      play(lives > 0 ? 'win' : 'lose');
       api.gameResult(mode, score).then((r) => setAward(r.xp)).catch(() => setAward(0));
     }
   }, [finished, score, mode]);
@@ -212,6 +216,7 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
   const pick = (o: string) => {
     if (!task || flash) return;
     const ok = norm(o) === norm(task.answer);
+    play(ok ? 'correct' : 'wrong');
     setFlash({ ok, picked: o });
     if (ok) {
       const c = combo + 1;
@@ -328,17 +333,20 @@ function WordBuilder({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (finished && !sent.current) {
       sent.current = true;
+      play('win');
       api.gameResult('words', score).then((r) => setAward(r.xp)).catch(() => setAward(0));
     }
   }, [finished, score]);
 
   const tap = (i: number) => {
     if (flash || placed.includes(i)) return;
+    play('click');
     const next = [...placed, i];
     setPlaced(next);
     if (next.length === cur.word.length) {
       const ok = next.map((k) => letters[k]).join('') === cur.word;
       setFlash(ok ? 'good' : 'bad');
+      play(ok ? 'correct' : 'wrong');
       if (ok) {
         setScore((n) => n + 5);
         setCorrect((n) => n + 1);
@@ -449,6 +457,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
   useEffect(() => {
     if (finished && !sent.current) {
       sent.current = true;
+      play(lives > 0 ? 'win' : 'lose');
       const score = Math.max(10, 40 - Math.max(0, moves - total) * 2);
       api.gameResult('memory', score).then((r) => setAward(r.xp)).catch(() => setAward(0));
     }

@@ -1,3 +1,4 @@
+import { play } from './sound';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { RichText } from './Art';
@@ -17,6 +18,7 @@ export default function ShopPanel({ onUser }: { onUser: (u: User) => void }) {
       setError('');
       try {
         setData(await fn());
+        play('coin');
         onUser(await api.me());
       } catch (e) {
         setError(errMsg(e));

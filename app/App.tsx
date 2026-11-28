@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { setGuideUser } from './src/heroes';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import { api, loadToken, setToken, User } from './src/api';
+import { loadSoundSettings } from './src/sound';
 import './src/install';
 import AdminScreen from './src/screens/AdminScreen';
 import AuthScreen from './src/screens/AuthScreen';
@@ -43,6 +44,7 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
+      loadSoundSettings();
       const token = await loadToken();
       if (token) {
         try {

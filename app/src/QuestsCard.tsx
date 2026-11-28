@@ -1,3 +1,4 @@
+import { play } from './sound';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { RichText } from './Art';
@@ -17,6 +18,7 @@ export default function QuestsCard({ refreshKey, onCoins }: { refreshKey: unknow
     setError('');
     try {
       await api.claimQuest(id);
+      play('coin');
       load();
       onCoins?.();
     } catch (e) {

@@ -1,3 +1,4 @@
+import SoundSettingsCard from '../SpeakButton';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg, HomeworkItem, Leaderboard, Stats, Topic, User } from '../api';
@@ -204,6 +205,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
 
       {tab === 'me' && stats && (
         <>
+          <SoundSettingsCard />
           <Card>
             <Text style={s.big}>
               Уровень {stats.level}: {stats.title}

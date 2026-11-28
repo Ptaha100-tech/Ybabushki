@@ -4,6 +4,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { AnswerResult, api, ApiError, errMsg, NextTask, Topic } from '../api';
 import { HeroPic, RichText } from '../Art';
 import { useHero } from '../heroes';
+import { SpeakButton } from '../SpeakButton';
+import { autoSpeak, play } from '../sound';
 import { Button, Card, colors, ErrorText, Field, Muted, Row, Screen, Title } from '../ui';
 
 /**
@@ -18,6 +20,7 @@ function TheoryCard({ text, hero }: { text: string; hero: ReturnType<typeof useH
         <HeroPic hero={hero} pose="book" size={64} />
         <Text style={{ fontSize: 20, fontWeight: '800', color: colors.primaryDark, marginLeft: 10, flex: 1 }}>📖 Это нужно знать</Text>
       </Row>
+      <SpeakButton text={text} label="🔊 Прослушать теорию" />
       {text.split('\n\n').map((block, i) => {
         const tip = /^(Совет|Запомни|Важно|Лайфхак)/.test(block.trim());
         return (
@@ -113,6 +116,8 @@ export default function PracticeScreen({
     try {
       const r = await api.answer(item.task.id, answer, homeworkId);
       setResult(r);
+      play(r.correct ? 'correct' : 'wrong');
+      if (!r.correct) autoSpeak(`Правильный ответ: ${r.correctAnswer}. ${r.explanation ?? ''}`);
       setDone((n) => n + 1);
       if (r.correct) setRight((n) => n + 1);
     } catch (e) {
@@ -175,6 +180,7 @@ export default function PracticeScreen({
           </Row>
 
           <Text style={[s.prompt, long && s.promptLong]}>{task.prompt}</Text>
+          <SpeakButton text={task.prompt} label="🔊 Прочитать задание" />
 
           {task.type === 'choice' && task.options && (
             <View>
@@ -314,6 +320,7 @@ export default function PracticeScreen({
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <HeroPic hero={hero} pose={result.correct ? 'thumbs' : 'think'} size={86} />
                 <View style={{ flex: 1 }}>
+                  {result.explanation ? <SpeakButton text={`Правильный ответ: ${result.correctAnswer}. ${result.explanation}`} label="🔊 Объяснить вслух" /> : null}
                   {result.explanation ? <RichText style={s.explain}>{result.correct ? '💡 ' : '💡 Почему так: '}{result.explanation}</RichText> : null}
                 </View>
               </View>
