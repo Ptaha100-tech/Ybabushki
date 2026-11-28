@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { ArtService } from './art.service';
 import { ImagesService } from './images.service';
@@ -19,6 +20,17 @@ class ArtDto {
   @IsString() @MaxLength(80) key: string;
   @IsString() @MaxLength(6_000_000) data: string;
 }
+class VideoDto {
+  @IsString() @MaxLength(1000) prompt: string;
+  @IsString() @MaxLength(80) model: string;
+  @IsOptional() @IsInt() @Min(1) @Max(15) duration?: number;
+  @IsOptional() @IsString() @MaxLength(10) aspectRatio?: string;
+  @IsOptional() @IsString() @MaxLength(10) resolution?: string;
+  @IsOptional() @IsString() @MaxLength(6_000_000) image?: string;
+}
+class InstallVideoDto {
+  @IsString() @MaxLength(80) key: string;
+}
 class BlockDto { @IsBoolean() blocked: boolean }
 class RoleDto { @IsIn(['student', 'teacher', 'parent', 'admin']) role: Role }
 class CoinsDto { @IsInt() @Min(-100000) @Max(100000) delta: number }
@@ -38,6 +50,16 @@ export class AdminController {
 
   @Post('art') artSet(@Body() d: ArtDto) { return this.art.set(d.key, d.data); }
   @Delete('art') artRemove(@Query('key') key: string) { return this.art.remove(key); }
+
+  @Get('video/models') videoModels() { return this.images.videoModels(); }
+  @Post('video') videoStart(@Body() d: VideoDto) { return this.images.videoStart(d); }
+  @Get('video/:id') videoStatus(@Param('id') id: string) { return this.images.videoStatus(id); }
+  @Get('video/:id/content') async videoContent(@Param('id') id: string, @Res() res: Response) {
+    res.set({ 'Content-Type': 'video/mp4', 'Cache-Control': 'private, max-age=600' }).send(await this.images.videoFile(id));
+  }
+  @Post('video/:id/install') async videoInstall(@Param('id') id: string, @Body() d: InstallVideoDto) {
+    return this.art.setVideo(d.key, await this.images.videoFile(id));
+  }
 
   @Get('images/status') imageStatus() { return this.images.status(); }
   @Get('images/models') imageModels() { return this.images.models(); }

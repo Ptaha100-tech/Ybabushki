@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
  * - Эффекты и музыка: готовые файлы (web — /sfx и /music, Android — expo-audio).
  * - Озвучка: встроенный синтез речи устройства (web — speechSynthesis, Android — expo-speech). Бесплатно, без сервера.
  */
-export type Sfx = 'correct' | 'wrong' | 'click' | 'coin' | 'flip' | 'win' | 'lose';
+export type Sfx = 'correct' | 'wrong' | 'click' | 'coin' | 'flip' | 'win' | 'lose' | 'pop';
 export interface SoundSettings { sfx: boolean; music: boolean; voice: boolean }
 
 const DEFAULTS: SoundSettings = { sfx: true, music: false, voice: false };
@@ -25,6 +25,7 @@ const FILES: Record<Sfx, any> = isWeb
       flip: require('../assets/sfx/flip.wav'),
       win: require('../assets/sfx/win.wav'),
       lose: require('../assets/sfx/lose.wav'),
+      pop: require('../assets/sfx/pop.wav'),
     };
 
 const notify = () => listeners.forEach((f) => f());

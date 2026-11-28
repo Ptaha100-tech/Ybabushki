@@ -52,3 +52,10 @@ backend `admin.controller/service.ts`, экран `app/src/screens/AdminScreen.t
 - Ключи: `hero:<герой>:<поза>`, `icon:<имя>`, `scene:<имя>`. Клиент: `app/src/art.ts` (`loadArt`, `artSrc`, `useArtTick`), Art.tsx использует их.
 - В админке: Картинки → «📌 Поставить на сервис» → выбрать место; «вернуть» сбрасывает.
 - Идея дальше: новые декоративные слоты (фоны, баннеры).
+
+## Живые ролики (видео AITunnel)
+- Backend: `images.service` videoModels/videoStart/videoStatus/videoFile (POST/GET api.aitunnel.ru/v1/videos, асинхронно, опрос статуса); admin: `GET video/models`, `POST video`, `GET video/:id`, `GET video/:id/content`, `POST video/:id/install {key}` — ролик (mp4, до 25 МБ) копируется в `art_overrides` под ключом `anim:*`.
+- Слоты: `anim:balloon_idle`, `anim:balloon_pop`, `anim:hero:<герой>:<поза>` (HeroPic сам подхватывает ролик своей позы).
+- Клиент: `AnimClip.tsx` (только web: видео→canvas, вырезает зелёный фон; на телефоне — запасная картинка), `Float` (парение), HeroPic «дышит», шарики в игре плавают и лопаются со звуком `pop`.
+- Админка: Картинки → «🎬 Живые ролики».
+- TODO: Android-приложение пока без роликов (нужен expo-video); конфетти; анимации кнопок.

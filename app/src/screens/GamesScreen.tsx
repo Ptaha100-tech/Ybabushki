@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api, errMsg, LightningTask, SubjectMeta } from '../api';
-import { HeroPic, Icon, Scene, RichText } from '../Art';
+import { AnimClip } from '../AnimClip';
+import { animUri } from '../art';
+import { Float, HeroPic, Icon, Scene, RichText } from '../Art';
 import { useHero } from '../heroes';
 import { play } from '../sound';
 import { KidTask, KID_WORDS, makeBasketTasks, makeCountTasks, shuffled } from '../kids';
@@ -216,6 +218,7 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
   const pick = (o: string) => {
     if (!task || flash) return;
     const ok = norm(o) === norm(task.answer);
+    if (mode === 'balloons') play('pop');
     play(ok ? 'correct' : 'wrong');
     setFlash({ ok, picked: o });
     if (ok) {
@@ -280,6 +283,23 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
           {opts.map((o, i) => {
             const isRight = flash && norm(o) === norm(task!.answer);
             const isWrongPick = flash && !flash.ok && o === flash.picked;
+            if (mode === 'balloons' && animUri('anim:balloon_idle')) {
+              const popped = !!flash && flash.picked === o;
+              return (
+                <Pressable key={o} onPress={() => pick(o)} style={{ width: '44%', minHeight: 150, alignItems: 'center', justifyContent: 'center', borderWidth: isRight ? 4 : 0, borderColor: '#2F9E44', borderRadius: 24 }}>
+                  <Float delay={i * 250} amp={7}>
+                    {popped ? (
+                      <AnimClip slot="anim:balloon_pop" size={140} loop={false} fallback={<Text style={{ fontSize: 60 }}>💥</Text>} />
+                    ) : (
+                      <View style={{ width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
+                        <AnimClip slot="anim:balloon_idle" size={140} />
+                        <Text style={{ position: 'absolute', fontSize: 18, fontWeight: '800', color: '#1b1b1b', textAlign: 'center', paddingHorizontal: 30, top: 38 }}>{o}</Text>
+                      </View>
+                    )}
+                  </Float>
+                </Pressable>
+              );
+            }
             return (
               <Pressable
                 key={o}

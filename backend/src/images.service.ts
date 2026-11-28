@@ -82,4 +82,72 @@ export class ImagesService {
     if (!images.length) throw new BadRequestException('Сервис не вернул картинку. Попробуйте другое описание или модель.');
     return { images, cost: j.usage?.cost_rub ?? null, balance: j.usage?.balance ?? null };
   }
+
+  // ---------- видео (асинхронно: создать задачу → спрашивать готовность → скачать) ----------
+  async videoModels() {
+    try {
+      const r = await fetch(`${BASE}/public/aitunnel/models/videos`, { signal: AbortSignal.timeout(10_000) });
+      const j: any = await r.json();
+      const list: any[] = Array.isArray(j) ? j : j.data ?? j.models ?? [];
+      const out = list
+        .filter((m) => m.available !== false)
+        .map((m) => ({ id: String(m.id ?? m.model ?? ''), name: String(m.name ?? m.title ?? m.id ?? '') }))
+        .filter((m) => m.id && !/upscale|edit|aleph|avatar|heygen/i.test(m.id));
+      if (out.length) return out.slice(0, 60);
+    } catch {
+      /* запасной список */
+    }
+    return [
+      { id: 'seedance-2.0-fast', name: 'Seedance 2.0 Fast' },
+      { id: 'seedance-2.0-mini', name: 'Seedance 2.0 Mini' },
+      { id: 'veo-3.1-lite', name: 'Veo 3.1 Lite' },
+      { id: 'wan-2.7', name: 'Wan 2.7' },
+      { id: 'mischief-1', name: 'Mischief 1 (очень дёшево, для проб)' },
+    ];
+  }
+
+  private async vcall(path: string, init?: RequestInit) {
+    if (!this.key()) throw new BadRequestException('Ключ AITunnel не настроен на сервере (bash scripts/set-aitunnel.sh)');
+    return fetch(`${BASE}/v1/videos${path}`, {
+      ...init,
+      headers: { Authorization: `Bearer ${this.key()}`, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(120_000),
+    });
+  }
+
+  async videoStart(d: { prompt: string; model: string; duration?: number; aspectRatio?: string; resolution?: string; image?: string }) {
+    const body: Record<string, unknown> = { model: d.model, prompt: d.prompt, duration: d.duration ?? 4 };
+    if (d.aspectRatio) body.aspect_ratio = d.aspectRatio;
+    if (d.resolution) body.resolution = d.resolution;
+    if (d.image) body.frame_images = [{ type: 'image_url', image_url: { url: d.image }, frame_type: 'first_frame' }];
+    const res = await this.vcall('', { method: 'POST', body: JSON.stringify(body) });
+    const text = await res.text();
+    let j: any = {};
+    try {
+      j = JSON.parse(text);
+    } catch {
+      /* ниже */
+    }
+    if (!res.ok || !j.id) {
+      const msg = j?.error?.message ?? j?.message ?? j?.detail ?? text.slice(0, 200);
+      this.log.error(`Видео: ${res.status} ${msg}`);
+      throw new BadRequestException(`Сервис видео: ${typeof msg === 'string' ? msg : JSON.stringify(msg)}`);
+    }
+    return { id: String(j.id) };
+  }
+
+  async videoStatus(id: string) {
+    const res = await this.vcall(`/${encodeURIComponent(id)}`);
+    const j: any = await res.json().catch(() => ({}));
+    if (!res.ok) throw new BadRequestException(`Сервис видео: ${j?.error?.message ?? j?.message ?? res.status}`);
+    return { status: String(j.status ?? ''), error: j.error ? String(j.error) : null, cost: j.usage?.cost_rub ?? null };
+  }
+
+  async videoFile(id: string): Promise<Buffer> {
+    const res = await this.vcall(`/${encodeURIComponent(id)}/content?index=0`);
+    if (!res.ok) throw new BadRequestException('Видео ещё не готово или недоступно');
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 25_000_000) throw new BadRequestException('Видео слишком большое (больше 25 МБ). Выберите меньшую длительность или качество.');
+    return buf;
+  }
 }

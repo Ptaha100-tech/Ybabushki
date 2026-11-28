@@ -351,6 +351,141 @@ function SlotPicker({ uri, onDone }: { uri: string; onDone: (msg: string) => voi
   );
 }
 
+const ANIM_SLOTS: { key: string; label: string }[] = [
+  { key: 'anim:balloon_idle', label: '🎈 Шарик висит' },
+  { key: 'anim:balloon_pop', label: '💥 Шарик лопается' },
+  ...(['boy', 'glasses', 'pink'] as HeroKey[]).flatMap((h) =>
+    POSES.map((p) => ({ key: `anim:hero:${h}:${p}`, label: `${HERO_NAMES[h]}: ${p}` })),
+  ),
+];
+
+/** Видео: рисуем ролик, смотрим, ставим на «живое» место сервиса. */
+function VideoLab() {
+  const [models, setModels] = useState<{ id: string; name: string }[]>([]);
+  const [model, setModel] = useState('seedance-2.0-fast');
+  const [prompt, setPrompt] = useState('');
+  const [dur, setDur] = useState(4);
+  const [res, setRes] = useState('720p');
+  const [ratio, setRatio] = useState('1:1');
+  const [hero, setHero] = useState<HeroKey | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [info, setInfo] = useState('');
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [slots, setSlots] = useState(false);
+  const [, tick] = useState(0);
+  const web = isWebEnv;
+
+  useEffect(() => {
+    api.adminVideoModels().then(setModels).catch(() => undefined);
+  }, []);
+
+  const go = async () => {
+    setErr(''); setInfo(''); setPreview(null); setJobId(null); setSlots(false); setBusy(true);
+    try {
+      let image: string | undefined;
+      if (hero) image = await assetToDataUri(heroImg(hero, 'wave'), 768);
+      let p = prompt.trim() + ' Фон: ровный однотонный ярко-зелёный (#00FF00), без теней, камера неподвижна, мультяшный 3D-стиль для детей.';
+      const { id } = await api.adminVideoStart({ prompt: p, model, duration: dur, aspectRatio: ratio, resolution: res, image });
+      setJobId(id);
+      setInfo('Ролик рисуется, обычно 1–3 минуты. Не закрывайте страницу…');
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 8000));
+        const st = await api.adminVideoStatus(id);
+        if (st.status === 'completed') {
+          setPreview(await api.adminVideoBlobUrl(id));
+          setInfo(`Готово! Стоимость: ${st.cost ?? '?'} ₽. Посмотрите и нажмите «Поставить на сервис».`);
+          setBusy(false);
+          return;
+        }
+        if (['failed', 'expired', 'cancelled'].includes(st.status)) throw new Error(st.error || 'Не получилось, деньги возвращены. Попробуйте другое описание.');
+      }
+      throw new Error('Слишком долго. Попробуйте ещё раз.');
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+    setBusy(false);
+  };
+
+  const put = async (key: string) => {
+    if (!jobId) return;
+    setBusy(true);
+    try {
+      await api.adminVideoInstall(jobId, key);
+      await loadArt();
+      tick((n) => n + 1);
+      setInfo(`✅ Поставлено: ${key}. Обновите сайт, чтобы увидеть.`);
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+    setBusy(false);
+  };
+  const reset = async (key: string) => {
+    try {
+      await api.adminArtRemove(key);
+      await loadArt();
+      tick((n) => n + 1);
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+  };
+
+  if (!web) return <Card><Heading>🎬 Живые ролики</Heading><Muted>Создание роликов доступно на сайте (в браузере).</Muted></Card>;
+  const done = overriddenKeys();
+  return (
+    <Card>
+      <Heading>🎬 Живые ролики</Heading>
+      <Muted>Опишите, что должно происходить: «воздушный шарик спокойно покачивается», «шарик лопается с конфетти», «мальчик машет рукой и улыбается». Фон автоматически станет прозрачным на сайте.</Muted>
+      <Field label="Описание ролика" value={prompt} onChangeText={setPrompt} multiline />
+      <Text style={{ fontWeight: '700', color: colors.text, marginVertical: 6 }}>Модель</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+        {models.map((m) => <Chip key={m.id} label={m.name} active={model === m.id} onPress={() => setModel(m.id)} />)}
+      </Row>
+      <Text style={{ fontWeight: '700', color: colors.text, marginVertical: 6 }}>Длина (сек) и качество</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+        {[3, 4, 5, 6, 8].map((d) => <Chip key={d} label={`${d} с`} active={dur === d} onPress={() => setDur(d)} />)}
+        {['480p', '720p'].map((r) => <Chip key={r} label={r} active={res === r} onPress={() => setRes(r)} />)}
+        {['1:1', '9:16', '16:9'].map((r) => <Chip key={r} label={r} active={ratio === r} onPress={() => setRatio(r)} />)}
+      </Row>
+      <Text style={{ fontWeight: '700', color: colors.text, marginVertical: 6 }}>Оживить нашего героя (первый кадр)</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        <Chip label="Без героя" active={hero === null} onPress={() => setHero(null)} />
+        {(['boy', 'glasses', 'pink'] as HeroKey[]).map((h) => <Chip key={h} label={HERO_NAMES[h]} active={hero === h} onPress={() => setHero(h)} />)}
+      </Row>
+      <ErrorText text={err} />
+      <InfoText text={info} />
+      {busy ? <ActivityIndicator size="large" color={colors.primary} /> : <Button title="🎬 Создать ролик" onPress={go} disabled={prompt.trim().length < 3} />}
+      {preview && (
+        <View style={{ marginTop: 10 }}>
+          {React.createElement('video', { src: preview, autoPlay: true, loop: true, muted: true, playsInline: true, controls: true, style: { width: '100%', maxHeight: 320, background: '#00B140', borderRadius: 12 } })}
+          <View style={{ marginTop: 8 }}>
+            <Button title={slots ? 'Скрыть' : '📌 Поставить на сервис'} onPress={() => setSlots(!slots)} />
+          </View>
+        </View>
+      )}
+      {preview && slots && (
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 6 }}>Куда поставить?</Text>
+          <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+            {ANIM_SLOTS.map((a) => (
+              <Chip key={a.key} label={(done.includes(a.key) ? '✅ ' : '') + a.label} active={done.includes(a.key)} onPress={() => put(a.key)} />
+            ))}
+          </Row>
+          {done.some((k) => k.startsWith('anim:')) && (
+            <>
+              <Muted>Уже стоят (нажмите, чтобы убрать):</Muted>
+              <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+                {done.filter((k) => k.startsWith('anim:')).map((k) => <Chip key={k} label={`✖ ${k.replace('anim:', '')}`} onPress={() => reset(k)} />)}
+              </Row>
+            </>
+          )}
+        </View>
+      )}
+    </Card>
+  );
+}
+
 function ImageLab() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [models, setModels] = useState<{ id: string; name: string }[]>([]);
@@ -492,7 +627,7 @@ export default function AdminScreen({ user, onLogout }: { user: User; onLogout: 
       {tab === 'users' && <People me={user.id} />}
       {tab === 'topics' && <Topics />}
       {tab === 'mail' && <Mail />}
-      {tab === 'img' && <ImageLab />}
+      {tab === 'img' && <><ImageLab /><VideoLab /></>}
       <View style={{ height: 16 }} />
       <Button title="Выйти" kind="secondary" onPress={onLogout} />
     </Screen>

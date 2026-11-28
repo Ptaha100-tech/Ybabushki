@@ -205,6 +205,17 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const api = {
   mistakesCount: () => request<{ count: number }>('GET', '/me/mistakes'),
   nextMistake: (exclude?: string) => request<NextTask>('GET', `/me/mistakes/next${exclude ? `?exclude=${exclude}` : ''}`),
+  adminVideoModels: () => request<{ id: string; name: string }[]>('GET', '/admin/video/models'),
+  adminVideoStart: (b: { prompt: string; model: string; duration?: number; aspectRatio?: string; resolution?: string; image?: string }) =>
+    request<{ id: string }>('POST', '/admin/video', b),
+  adminVideoStatus: (id: string) => request<{ status: string; error: string | null; cost: number | null }>('GET', `/admin/video/${id}`),
+  adminVideoInstall: (id: string, key: string) => request<{ ok: boolean }>('POST', `/admin/video/${id}/install`, { key }),
+  /** Скачать готовое видео для просмотра в админке (нужен вход), возвращает blob-ссылку (только web). */
+  adminVideoBlobUrl: async (id: string): Promise<string> => {
+    const r = await fetch(`${BASE}/admin/video/${id}/content`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!r.ok) throw new Error('Видео недоступно');
+    return URL.createObjectURL(await r.blob());
+  },
   adminImageStatus: () => request<{ configured: boolean }>('GET', '/admin/images/status'),
   adminImageModels: () => request<{ id: string; name: string }[]>('GET', '/admin/images/models'),
   adminImage: (b: { prompt: string; model: string; aspectRatio?: string; background?: string; n?: number; refs?: string[] }) =>

@@ -1,12 +1,45 @@
-import React from 'react';
-import { Image, ImageStyle, StyleProp, Text, TextStyle } from 'react-native';
-import { artSrc, useArtTick } from './art';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, Image, ImageStyle, Platform, StyleProp, Text, TextStyle } from 'react-native';
+import { AnimClip } from './AnimClip';
+import { animUri, artSrc, useArtTick } from './art';
 import { HeroKey, heroImg, ICONS, Pose, SCENES } from './heroes';
 
 /** Персонаж в нужной позе. Размер — высота в пикселях. */
 export function HeroPic({ hero, pose, size, style }: { hero: HeroKey; pose: Pose; size: number; style?: StyleProp<ImageStyle> }) {
   useArtTick();
-  return <Image source={artSrc(`hero:${hero}:${pose}`, heroImg(hero, pose))} resizeMode="contain" style={[{ width: size * 0.9, height: size }, style]} />;
+  const y = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(y, { toValue: -size * 0.03, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(y, { toValue: 0, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== 'web' }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [y, size]);
+  const still = (
+    <Animated.Image source={artSrc(`hero:${hero}:${pose}`, heroImg(hero, pose))} resizeMode="contain" style={[{ width: size * 0.9, height: size }, style as any, { transform: [{ translateY: y }] }]} />
+  );
+  // Если в админке поставлен ролик для этой позы — показываем живого героя.
+  return animUri(`anim:hero:${hero}:${pose}`) ? <AnimClip slot={`anim:hero:${hero}:${pose}`} size={size} fallback={still} /> : still;
+}
+
+/** Лёгкое парение (шарики, значки): плавно покачивает содержимое вверх-вниз. */
+export function Float({ children, amp = 6, delay = 0, style }: { children: React.ReactNode; amp?: number; delay?: number; style?: StyleProp<any> }) {
+  const y = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const nd = Platform.OS !== 'web';
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(y, { toValue: -amp, duration: 1400, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: nd }),
+        Animated.timing(y, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: nd }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [y, amp, delay]);
+  return <Animated.View style={[style, { transform: [{ translateY: y }] }]}>{children}</Animated.View>;
 }
 
 /** Значок из набора иллюстраций. */
