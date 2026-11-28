@@ -111,6 +111,35 @@ export class LearningService {
     return { task: this.publicTask(task), level: prog.level, remaining };
   }
 
+  /** Задания, на которые ученик в последний раз ответил неверно (за 60 дней). */
+  private async mistakeIds(userId: string): Promise<string[]> {
+    const rows: { taskId: string }[] = await this.attempts.query(
+      `SELECT a."taskId" FROM (
+         SELECT DISTINCT ON ("taskId") "taskId", correct FROM attempts
+         WHERE "userId" = $1 AND "createdAt" > now() - interval '60 days'
+         ORDER BY "taskId", "createdAt" DESC) a
+       WHERE NOT a.correct`,
+      [userId],
+    );
+    return rows.map((r) => r.taskId);
+  }
+
+  async mistakesCount(userId: string) {
+    return { count: (await this.mistakeIds(userId)).length };
+  }
+
+  /** «Работа над ошибками»: следующее задание из прошлых ошибок. Верный ответ убирает его из списка. */
+  async nextMistake(userId: string, excludeTaskId?: string) {
+    const remaining = await this.remainingToday(userId);
+    if (remaining === 0) throw this.limitReached();
+    let ids = await this.mistakeIds(userId);
+    if (excludeTaskId && ids.length > 1) ids = ids.filter((i) => i !== excludeTaskId);
+    if (!ids.length) throw new NotFoundException('Ошибок больше нет — отлично! 🎉');
+    const task = await this.tasks.findOne({ where: { id: ids[Math.floor(Math.random() * ids.length)] } });
+    if (!task) throw new NotFoundException('Ошибок больше нет — отлично! 🎉');
+    return { task: this.publicTask(task), level: 1, remaining };
+  }
+
   async answer(userId: string, taskId: string, raw: string, homeworkId?: string) {
     const task = await this.tasks.findOne({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Задание не найдено');

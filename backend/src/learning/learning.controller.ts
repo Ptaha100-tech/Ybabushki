@@ -29,6 +29,18 @@ export class LearningController {
   }
 
   @Roles('student')
+  @Get('me/mistakes')
+  mistakes(@CurrentUser() user: AuthUser) {
+    return this.learning.mistakesCount(user.id);
+  }
+
+  @Roles('student')
+  @Get('me/mistakes/next')
+  nextMistake(@CurrentUser() user: AuthUser, @Query('exclude') exclude?: string) {
+    return this.learning.nextMistake(user.id, exclude || undefined);
+  }
+
+  @Roles('student')
   @Get('topics/:id/next')
   next(
     @CurrentUser() user: AuthUser,

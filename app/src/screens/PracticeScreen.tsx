@@ -37,10 +37,12 @@ function TheoryCard({ text, hero }: { text: string; hero: ReturnType<typeof useH
 export default function PracticeScreen({
   topic,
   homeworkId,
+  mistakes,
   onClose,
 }: {
   topic: Topic;
   homeworkId?: string;
+  mistakes?: boolean;
   onClose: () => void;
 }) {
   const [item, setItem] = useState<NextTask | null>(null);
@@ -58,6 +60,7 @@ export default function PracticeScreen({
   const [showTheory, setShowTheory] = useState(false);
   const [intro, setIntro] = useState(false); // первый заход в тему: сначала теория, потом задания
   useEffect(() => {
+    if (mistakes) return;
     api
       .theory(topic.id)
       .then(async (r) => {
@@ -70,7 +73,7 @@ export default function PracticeScreen({
         }
       })
       .catch(() => undefined);
-  }, [topic.id]);
+  }, [topic.id, mistakes]);
   const closeIntro = () => {
     setIntro(false);
     AsyncStorage.setItem(`theory_seen_${topic.id}`, '1').catch(() => undefined);
@@ -89,7 +92,7 @@ export default function PracticeScreen({
       setPairs({});
       setActiveLeft(null);
       try {
-        setItem(await api.nextTask(topic.id, homeworkId, exclude));
+        setItem(mistakes ? await api.nextMistake(exclude) : await api.nextTask(topic.id, homeworkId, exclude));
       } catch (e) {
         if (e instanceof ApiError && e.code === 'LIMIT_REACHED') setLimit(true);
         else setError(errMsg(e));
@@ -97,7 +100,7 @@ export default function PracticeScreen({
         setLoading(false);
       }
     },
-    [topic.id, homeworkId],
+    [topic.id, homeworkId, mistakes],
   );
 
   useEffect(() => {

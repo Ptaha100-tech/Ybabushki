@@ -28,7 +28,8 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
   const hero = useHero();
   const [stats, setStats] = useState<Stats | null>(null);
   const [homework, setHomework] = useState<HomeworkItem[]>([]);
-  const [practice, setPractice] = useState<{ topic: Topic; homeworkId?: string } | null>(null);
+  const [practice, setPractice] = useState<{ topic: Topic; homeworkId?: string; mistakes?: boolean } | null>(null);
+  const [mistakes, setMistakes] = useState(0);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -40,6 +41,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
   const load = useCallback(async () => {
     try {
       const [s, h, c, w] = await Promise.all([api.stats(), api.myHomework(), api.catalog(), api.weakTopics().catch(() => [])]);
+      api.mistakesCount().then((m) => setMistakes(m.count)).catch(() => undefined);
       setStats(s);
       setWeak(w);
       setHomework(h);
@@ -70,7 +72,7 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
     }
   };
 
-  if (practice) return <PracticeScreen topic={practice.topic} homeworkId={practice.homeworkId} onClose={() => setPractice(null)} />;
+  if (practice) return <PracticeScreen topic={practice.topic} homeworkId={practice.homeworkId} mistakes={practice.mistakes} onClose={() => setPractice(null)} />;
   if (tab === 'games') return <GamesScreen grade={stats?.grade ?? user.grade} onClose={() => { setTab('learn'); load(); }} />;
 
   const NAV: [Tab, string, string][] = [
@@ -116,6 +118,14 @@ export default function StudentScreen({ user, onLogout, onInfo, onUser, onTour }
             <Muted>
               {stats.remaining === null ? '♾️ Безлимитные занятия включены' : `Бесплатных заданий сегодня осталось: ${stats.remaining}`} · 🔥 серия {stats.dayStreak} дн.
             </Muted>
+          )}
+          {mistakes > 0 && (
+            <Pressable onPress={() => setPractice({ topic: { id: 'mistakes', title: 'Работа над ошибками', grade: 0, subject: '', icon: null }, mistakes: true })}>
+              <Card>
+                <Text style={s.hwTitle}>🔁 Работа над ошибками</Text>
+                <Muted>Заданий, где ты ошибся(ась): {mistakes}. Реши их ещё раз — верный ответ уберёт задание из списка. Нажми, чтобы начать!</Muted>
+              </Card>
+            </Pressable>
           )}
           {weak.length > 0 && (
             <>

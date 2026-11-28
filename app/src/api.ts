@@ -202,6 +202,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
+  mistakesCount: () => request<{ count: number }>('GET', '/me/mistakes'),
+  nextMistake: (exclude?: string) => request<NextTask>('GET', `/me/mistakes/next${exclude ? `?exclude=${exclude}` : ''}`),
   adminStats: () => request<AdminStats>('GET', '/admin/stats'),
   adminUsers: (q: string, role: string, page: number) =>
     request<{ total: number; page: number; rows: AdminUserRow[] }>('GET', `/admin/users?q=${encodeURIComponent(q)}&role=${role}&page=${page}`),
