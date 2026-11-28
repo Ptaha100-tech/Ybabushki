@@ -5,7 +5,7 @@ import { GameResult, User } from '../entities';
 import { Task } from '../entities';
 
 const DAILY_GAME_XP_CAP = 100;
-const PER_GAME_CAP: Record<string, number> = { lightning: 60, memory: 40, balloons: 40, truefalse: 40 };
+const PER_GAME_CAP: Record<string, number> = { lightning: 60, memory: 40, balloons: 40, truefalse: 40, words: 40, baskets: 40, count: 40 };
 
 @Injectable()
 export class GamesService {

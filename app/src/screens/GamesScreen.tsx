@@ -3,9 +3,10 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { api, errMsg, LightningTask, SubjectMeta } from '../api';
 import { HeroPic, Icon, Scene, RichText } from '../Art';
 import { useHero } from '../heroes';
+import { KidTask, KID_WORDS, makeBasketTasks, makeCountTasks, shuffled } from '../kids';
 import { Button, Card, Chip, colors, ErrorText, Heading, Muted, Row, Screen, Title } from '../ui';
 
-type Game = 'lightning' | 'memory' | 'balloons' | 'truefalse' | null;
+type Game = 'lightning' | 'memory' | 'balloons' | 'truefalse' | 'baskets' | 'count' | 'words' | null;
 
 export default function GamesScreen({ grade, onClose }: { grade?: number | null; onClose: () => void }) {
   const [game, setGame] = useState<Game>(null);
@@ -17,7 +18,8 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
   }, []);
 
   if (game === 'lightning') return <Lightning subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
-  if (game === 'balloons' || game === 'truefalse') return <KidGame mode={game} subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
+  if (game === 'words') return <WordBuilder onClose={() => setGame(null)} />;
+  if (game === 'balloons' || game === 'truefalse' || game === 'baskets' || game === 'count') return <KidGame mode={game} subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
   if (game === 'memory') return <Memory subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
 
   return (
@@ -32,6 +34,21 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
           <Chip key={s.key} label={`${s.emoji} ${s.title}`} active={subject === s.key} onPress={() => setSubject(s.key)} />
         ))}
       </Row>
+      <Card>
+        <Heading>🔤 Собери слово</Heading>
+        <Muted>Посмотри на картинку и собери слово из букв. Нажимай буквы по порядку!</Muted>
+        <Button title="Играть" onPress={() => setGame('words')} />
+      </Card>
+      <Card>
+        <Heading>🧺 Разложи по корзинкам</Heading>
+        <Muted>Животные или растения? Фрукты или овощи? Выбери, в какую корзинку положить.</Muted>
+        <Button title="Играть" onPress={() => setGame('baskets')} />
+      </Card>
+      <Card>
+        <Heading>🍎 Считаем картинки</Heading>
+        <Muted>Посчитай яблоки, звёздочки и рыбок: сколько всего и сколько осталось?</Muted>
+        <Button title="Играть" onPress={() => setGame('count')} />
+      </Card>
       <Card>
         <Heading>🎈 Лопни шарик</Heading>
         <Muted>Прочитай вопрос и лопни шарик с верным ответом. У тебя 3 жизни ❤️ — ошибайся осторожно!</Muted>
@@ -162,8 +179,8 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
 const BALLOON_COLORS = ['#FF6B6B', '#4DABF7', '#FFD43B', '#69DB7C'];
 
 /** Игры для малышей: «Лопни шарик» (4 разноцветных шарика) и «Правда или неправда» (две большие кнопки). 3 жизни. */
-function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefalse'; subject?: string; grade?: number; onClose: () => void }) {
-  const [tasks, setTasks] = useState<LightningTask[] | null>(null);
+function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefalse' | 'baskets' | 'count'; subject?: string; grade?: number; onClose: () => void }) {
+  const [tasks, setTasks] = useState<(LightningTask | KidTask)[] | null>(null);
   const [error, setError] = useState('');
   const [idx, setIdx] = useState(0);
   const [lives, setLives] = useState(3);
@@ -175,6 +192,14 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
   const sent = useRef(false);
 
   useEffect(() => {
+    if (mode === 'baskets') {
+      setTasks(makeBasketTasks());
+      return;
+    }
+    if (mode === 'count') {
+      setTasks(makeCountTasks(grade ?? 2));
+      return;
+    }
     api
       .lightning(subject, grade, mode === 'balloons' ? 'choice' : 'tf')
       .then((r) => setTasks(r.tasks.slice(0, 25)))
@@ -242,7 +267,18 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
         <Text style={s.q}>{task?.prompt}</Text>
         {flash && !flash.ok ? <Text style={s.wrongNote}>Правильно: {task?.answer}</Text> : null}
       </Card>
-      {mode === 'balloons' ? (
+      {mode === 'baskets' ? (
+        <View style={{ gap: 12 }}>
+          {opts.map((o, i) => {
+            const right = flash && norm(o) === norm(task!.answer);
+            return (
+              <Pressable key={o} onPress={() => pick(o)} style={{ minHeight: 84, borderRadius: 24, backgroundColor: i === 0 ? '#74C0FC' : '#FFC078', alignItems: 'center', justifyContent: 'center', borderWidth: right ? 5 : 0, borderColor: '#2F9E44' }}>
+                <Text style={{ fontSize: 22, fontWeight: '800', color: '#1b1b1b' }}>{o}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : mode === 'balloons' || mode === 'count' ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
           {opts.map((o, i) => {
             const isRight = flash && norm(o) === norm(task!.answer);
@@ -277,6 +313,89 @@ function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefa
           })}
         </View>
       )}
+      <Button kind="secondary" title="Закончить" onPress={() => setLives(0)} />
+    </Screen>
+  );
+}
+
+/** «Собери слово»: картинка + буквы вперемешку. */
+function WordBuilder({ onClose }: { onClose: () => void }) {
+  const [words] = useState(() => shuffled(KID_WORDS).slice(0, 8));
+  const [idx, setIdx] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [score, setScore] = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [placed, setPlaced] = useState<number[]>([]); // индексы букв в порядке выбора
+  const [flash, setFlash] = useState<'good' | 'bad' | null>(null);
+  const [award, setAward] = useState<number | null>(null);
+  const sent = useRef(false);
+  const cur = words[idx];
+  const letters = React.useMemo(() => (cur ? shuffled(cur.word.split('')) : []), [cur]);
+  const finished = lives <= 0 || idx >= words.length;
+
+  useEffect(() => {
+    if (finished && !sent.current) {
+      sent.current = true;
+      api.gameResult('words', score).then((r) => setAward(r.xp)).catch(() => setAward(0));
+    }
+  }, [finished, score]);
+
+  const tap = (i: number) => {
+    if (flash || placed.includes(i)) return;
+    const next = [...placed, i];
+    setPlaced(next);
+    if (next.length === cur.word.length) {
+      const ok = next.map((k) => letters[k]).join('') === cur.word;
+      setFlash(ok ? 'good' : 'bad');
+      if (ok) {
+        setScore((n) => n + 5);
+        setCorrect((n) => n + 1);
+      } else setLives((l) => l - 1);
+      setTimeout(() => {
+        setFlash(null);
+        setPlaced([]);
+        if (ok) setIdx((x) => x + 1);
+      }, ok ? 700 : 1200);
+    }
+  };
+
+  if (finished)
+    return (
+      <Screen>
+        <Title>{lives > 0 ? '🎉 Все слова собраны!' : '💔 Жизни закончились'}</Title>
+        <Card>
+          <Scene name="jump" width={200} ratio={1.09} />
+          <Text style={s.big}>{correct} слов</Text>
+          <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
+          <Button title="Закрыть" onPress={onClose} />
+        </Card>
+      </Screen>
+    );
+
+  return (
+    <Screen>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <RichText style={s.timer}>{'❤️'.repeat(lives)}</RichText>
+        <RichText style={s.timer}>⭐ {score}</RichText>
+      </Row>
+      <Card style={flash ? { backgroundColor: flash === 'good' ? colors.goodBg : colors.badBg } : undefined}>
+        <Text style={{ fontSize: 80, textAlign: 'center' }}>{cur.emoji}</Text>
+        <Row style={{ justifyContent: 'center', gap: 6, marginVertical: 10 }}>
+          {cur.word.split('').map((_, i) => (
+            <Pressable key={i} onPress={() => !flash && setPlaced(placed.slice(0, i))} style={{ width: 38, height: 46, borderBottomWidth: 3, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text }}>{placed[i] !== undefined ? letters[placed[i]] : ''}</Text>
+            </Pressable>
+          ))}
+        </Row>
+        {flash === 'bad' ? <Text style={s.wrongNote}>Правильно: {cur.word}</Text> : null}
+      </Card>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
+        {letters.map((l, i) => (
+          <Pressable key={i} onPress={() => tap(i)} style={{ width: 54, height: 60, borderRadius: 16, backgroundColor: placed.includes(i) ? '#E5E7EB' : '#FFD43B', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: placed.includes(i) ? '#9CA3AF' : '#1b1b1b' }}>{l}</Text>
+          </Pressable>
+        ))}
+      </View>
       <Button kind="secondary" title="Закончить" onPress={() => setLives(0)} />
     </Screen>
   );

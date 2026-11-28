@@ -246,7 +246,7 @@ export const api = {
     if (grade) q.set('grade', String(grade));
     return request<{ pairs: [string, string][] }>('GET', `/games/memory?${q.toString()}`);
   },
-  gameResult: (game: 'lightning' | 'memory' | 'balloons' | 'truefalse', score: number) =>
+  gameResult: (game: 'lightning' | 'memory' | 'balloons' | 'truefalse' | 'words' | 'baskets' | 'count', score: number) =>
     request<{ xp: number; totalXp: number; dailyCapReached: boolean }>('POST', '/games/result', { game, score }),
   leaderboard: () =>
     request<Leaderboard>('GET', '/me/leaderboard'),

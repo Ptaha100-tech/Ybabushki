@@ -4,7 +4,7 @@ import { AuthGuard, AuthUser, CurrentUser, Roles } from '../auth/guards';
 import { GamesService } from './games.service';
 
 export class GameResultDto {
-  @IsIn(['lightning', 'memory', 'balloons', 'truefalse']) game: string;
+  @IsIn(['lightning', 'memory', 'balloons', 'truefalse', 'words', 'baskets', 'count']) game: string;
   @IsNumber() @Min(0) @Max(500) score: number;
 }
 
