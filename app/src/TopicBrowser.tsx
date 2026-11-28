@@ -42,6 +42,17 @@ export default function TopicBrowser({
     return cat.topics.filter((t) => (!subject || t.subject === subject) && (grade === null || t.grade === grade) && (kind === 'all' || examKind(t) === kind));
   }, [cat, subject, grade, kind]);
 
+  // Группировка по блокам (порядок — по первому появлению, внутри блока — по классу).
+  const groups = useMemo(() => {
+    const g = new Map<string, Topic[]>();
+    for (const t of list) {
+      const key = subject || subjectFilter ? t.block ?? '' : '';
+      if (!g.has(key)) g.set(key, []);
+      g.get(key)!.push(t);
+    }
+    return [...g.entries()].map(([k, v]) => [k, v.sort((a, b) => a.grade - b.grade)] as [string, Topic[]]);
+  }, [list, subject, subjectFilter]);
+
   if (error) return <ErrorText text={error} />;
   if (!cat) return <ActivityIndicator size="large" color={colors.primary} />;
 
@@ -76,7 +87,10 @@ export default function TopicBrowser({
         </>
       )}
       {list.length === 0 && <Muted>Для такого сочетания тем пока нет — выберите другой класс или предмет.</Muted>}
-      {list.map((t) => {
+      {groups.map(([block, items]) => (
+        <View key={block}>
+          {block ? <Text style={s.block}>📂 {block}</Text> : null}
+          {items.map((t) => {
         const m = meta(t.subject);
         const active = selectedId === t.id;
         return (
@@ -94,6 +108,8 @@ export default function TopicBrowser({
           </Pressable>
         );
       })}
+        </View>
+      ))}
     </View>
   );
 }
@@ -111,5 +127,6 @@ const s = StyleSheet.create({
   icon: { fontSize: 28 },
   title: { fontSize: 16, fontWeight: '700', color: colors.text },
   sub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  block: { fontSize: 15, fontWeight: '800', color: colors.primaryDark, marginTop: 14, marginBottom: 6 },
   level: { fontSize: 12, fontWeight: '700', color: colors.primary },
 });

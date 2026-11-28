@@ -52,6 +52,7 @@ export interface Topic {
   grade: number;
   subject: string;
   icon: string | null;
+  block?: string | null;
   tasks?: number;
   level?: number | null;
 }

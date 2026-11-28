@@ -64,6 +64,8 @@ export class Topic {
   @Column({ type: 'varchar', nullable: true }) contentHash: string | null;
   /** Краткая теория перед заданиями (необязательно). */
   @Column({ type: 'text', nullable: true }) theory: string | null;
+  /** Блок внутри предмета («Дроби и проценты»). */
+  @Column({ type: 'varchar', nullable: true }) block: string | null;
   /** Тема, созданная учителем (у тем из общего банка пусто). */
   @Index() @Column({ type: 'uuid', nullable: true }) ownerId: string | null;
 }

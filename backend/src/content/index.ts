@@ -16,6 +16,7 @@ import { examTopics } from './exams';
 import { examTopics2 } from './exams2';
 import { THEORY as THEORY_A } from './theory';
 import { THEORY2 } from './theory2';
+import { blockFor } from './blocks';
 const THEORY: Record<string, string> = { ...THEORY_A, ...THEORY2 };
 import { autoExplain } from './explain';
 
@@ -74,7 +75,7 @@ export function buildAll(seeds: TopicSeed[] = ALL_SEEDS): StoredTopic[] {
 
   return sorted.map((t, position) => {
     const tasks = t.tasks.map((s, i) => finalizeTask(s, t.slug, i));
-    const contentHash = hashSeed(JSON.stringify([t.title, t.grade, t.subject, t.icon ?? '', tasks, THEORY[t.slug] ?? ''])).toString(16);
+    const contentHash = hashSeed(JSON.stringify([t.title, t.grade, t.subject, t.icon ?? '', tasks, THEORY[t.slug] ?? '', blockFor(t.slug, t.subject)])).toString(16);
     return {
       slug: t.slug,
       subject: t.subject,
@@ -85,6 +86,7 @@ export function buildAll(seeds: TopicSeed[] = ALL_SEEDS): StoredTopic[] {
       contentHash,
       tasks,
       theory: THEORY[t.slug] ?? null,
+      block: blockFor(t.slug, t.subject),
     };
   });
 }

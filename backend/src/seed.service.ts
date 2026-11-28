@@ -59,7 +59,7 @@ export class SeedService implements OnApplicationBootstrap {
       );
       for (let i = 0; i < rows.length; i += 300) await this.tasks.save(rows.slice(i, i + 300));
       await this.topics.update(topic.id, {
-        title: t.title, grade: t.grade, position: t.position, subject: t.subject, icon: t.icon, contentHash: t.contentHash, theory: t.theory,
+        title: t.title, grade: t.grade, position: t.position, subject: t.subject, icon: t.icon, contentHash: t.contentHash, theory: t.theory, block: t.block,
       });
     }
 
