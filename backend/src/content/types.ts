@@ -75,4 +75,5 @@ export interface StoredTopic {
   contentHash: string;
   tasks: StoredTask[];
   theory: string | null;
+  block: string;
 }
