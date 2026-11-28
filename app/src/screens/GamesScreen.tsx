@@ -333,7 +333,7 @@ function WordBuilder({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (finished && !sent.current) {
       sent.current = true;
-      play('win');
+      play(lives > 0 ? 'win' : 'lose');
       api.gameResult('words', score).then((r) => setAward(r.xp)).catch(() => setAward(0));
     }
   }, [finished, score]);
@@ -457,7 +457,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
   useEffect(() => {
     if (finished && !sent.current) {
       sent.current = true;
-      play(lives > 0 ? 'win' : 'lose');
+      play('win');
       const score = Math.max(10, 40 - Math.max(0, moves - total) * 2);
       api.gameResult('memory', score).then((r) => setAward(r.xp)).catch(() => setAward(0));
     }
