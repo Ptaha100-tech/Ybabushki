@@ -5,7 +5,7 @@ import { GameResult, User } from '../entities';
 import { Task } from '../entities';
 
 const DAILY_GAME_XP_CAP = 100;
-const PER_GAME_CAP: Record<string, number> = { lightning: 60, memory: 40 };
+const PER_GAME_CAP: Record<string, number> = { lightning: 60, memory: 40, balloons: 40, truefalse: 40 };
 
 @Injectable()
 export class GamesService {
@@ -16,11 +16,13 @@ export class GamesService {
   ) {}
 
   /** «Молния»: быстрые вопросы (выбор/число). Это игра, ответы клиент проверяет сам. */
-  async lightning(userId: string, subject?: string, grade?: number) {
+  async lightning(userId: string, subject?: string, grade?: number, mode?: string) {
     const user = await this.users.findOneOrFail({ where: { id: userId } });
     const g = grade ?? user.grade ?? null;
     const params: unknown[] = [];
     let where = `t.type IN ('choice','number') AND length(t.prompt) < 110 AND t.difficulty <= 4`;
+    if (mode === 'tf') where = `t.type = 'choice' AND t.data::text LIKE '%"Верно"%' AND t.data::text LIKE '%"Неверно"%' AND length(t.prompt) < 140`;
+    else if (mode === 'choice') where = `t.type = 'choice' AND jsonb_array_length(t.data->'options') BETWEEN 3 AND 4 AND length(t.prompt) < 110 AND t.difficulty <= 4`;
     if (subject) {
       params.push(subject);
       where += ` AND tp.subject = $${params.length}`;

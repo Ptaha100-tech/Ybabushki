@@ -233,8 +233,9 @@ export const api = {
 
   topics: () => request<Topic[]>('GET', '/topics'),
   catalog: () => request<Catalog>('GET', '/catalog'),
-  lightning: (subject?: string, grade?: number) => {
+  lightning: (subject?: string, grade?: number, mode?: string) => {
     const q = new URLSearchParams();
+    if (mode) q.set('mode', mode);
     if (subject) q.set('subject', subject);
     if (grade) q.set('grade', String(grade));
     return request<{ tasks: LightningTask[] }>('GET', `/games/lightning?${q.toString()}`);
@@ -245,7 +246,7 @@ export const api = {
     if (grade) q.set('grade', String(grade));
     return request<{ pairs: [string, string][] }>('GET', `/games/memory?${q.toString()}`);
   },
-  gameResult: (game: 'lightning' | 'memory', score: number) =>
+  gameResult: (game: 'lightning' | 'memory' | 'balloons' | 'truefalse', score: number) =>
     request<{ xp: number; totalXp: number; dailyCapReached: boolean }>('POST', '/games/result', { game, score }),
   leaderboard: () =>
     request<Leaderboard>('GET', '/me/leaderboard'),

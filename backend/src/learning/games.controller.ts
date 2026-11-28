@@ -4,7 +4,7 @@ import { AuthGuard, AuthUser, CurrentUser, Roles } from '../auth/guards';
 import { GamesService } from './games.service';
 
 export class GameResultDto {
-  @IsIn(['lightning', 'memory']) game: string;
+  @IsIn(['lightning', 'memory', 'balloons', 'truefalse']) game: string;
   @IsNumber() @Min(0) @Max(500) score: number;
 }
 
@@ -15,8 +15,8 @@ export class GamesController {
   constructor(private games: GamesService) {}
 
   @Get('games/lightning')
-  lightning(@CurrentUser() u: AuthUser, @Query('subject') subject?: string, @Query('grade') grade?: string) {
-    return this.games.lightning(u.id, subject || undefined, grade ? Number(grade) : undefined);
+  lightning(@CurrentUser() u: AuthUser, @Query('subject') subject?: string, @Query('grade') grade?: string, @Query('mode') mode?: string) {
+    return this.games.lightning(u.id, subject || undefined, grade ? Number(grade) : undefined, mode);
   }
 
   @Get('games/memory')

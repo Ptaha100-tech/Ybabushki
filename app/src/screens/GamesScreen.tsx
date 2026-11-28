@@ -5,7 +5,7 @@ import { HeroPic, Icon, Scene, RichText } from '../Art';
 import { useHero } from '../heroes';
 import { Button, Card, Chip, colors, ErrorText, Heading, Muted, Row, Screen, Title } from '../ui';
 
-type Game = 'lightning' | 'memory' | null;
+type Game = 'lightning' | 'memory' | 'balloons' | 'truefalse' | null;
 
 export default function GamesScreen({ grade, onClose }: { grade?: number | null; onClose: () => void }) {
   const [game, setGame] = useState<Game>(null);
@@ -17,6 +17,7 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
   }, []);
 
   if (game === 'lightning') return <Lightning subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
+  if (game === 'balloons' || game === 'truefalse') return <KidGame mode={game} subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
   if (game === 'memory') return <Memory subject={subject} grade={grade ?? undefined} onClose={() => setGame(null)} />;
 
   return (
@@ -31,6 +32,16 @@ export default function GamesScreen({ grade, onClose }: { grade?: number | null;
           <Chip key={s.key} label={`${s.emoji} ${s.title}`} active={subject === s.key} onPress={() => setSubject(s.key)} />
         ))}
       </Row>
+      <Card>
+        <Heading>🎈 Лопни шарик</Heading>
+        <Muted>Прочитай вопрос и лопни шарик с верным ответом. У тебя 3 жизни ❤️ — ошибайся осторожно!</Muted>
+        <Button title="Играть" onPress={() => setGame('balloons')} />
+      </Card>
+      <Card>
+        <Heading>👍 Правда или неправда?</Heading>
+        <Muted>Прочитай утверждение и реши: правда это или нет. Серия верных ответов приносит больше звёзд!</Muted>
+        <Button title="Играть" onPress={() => setGame('truefalse')} />
+      </Card>
       <Card>
         <Row style={{ flexWrap: 'nowrap' }}><Icon name="bulb" size={40} /><Heading>Молния</Heading></Row>
         <Muted>60 секунд. Отвечай на вопросы как можно быстрее. Серия верных ответов даёт бонус!</Muted>
@@ -148,6 +159,129 @@ function Lightning({ subject, grade, onClose }: { subject?: string; grade?: numb
   );
 }
 
+const BALLOON_COLORS = ['#FF6B6B', '#4DABF7', '#FFD43B', '#69DB7C'];
+
+/** Игры для малышей: «Лопни шарик» (4 разноцветных шарика) и «Правда или неправда» (две большие кнопки). 3 жизни. */
+function KidGame({ mode, subject, grade, onClose }: { mode: 'balloons' | 'truefalse'; subject?: string; grade?: number; onClose: () => void }) {
+  const [tasks, setTasks] = useState<LightningTask[] | null>(null);
+  const [error, setError] = useState('');
+  const [idx, setIdx] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [flash, setFlash] = useState<{ ok: boolean; picked: string } | null>(null);
+  const [award, setAward] = useState<number | null>(null);
+  const sent = useRef(false);
+
+  useEffect(() => {
+    api
+      .lightning(subject, grade, mode === 'balloons' ? 'choice' : 'tf')
+      .then((r) => setTasks(r.tasks.slice(0, 25)))
+      .catch((e) => setError(errMsg(e)));
+  }, [subject, grade, mode]);
+
+  const finished = !!tasks && (lives <= 0 || idx >= tasks.length);
+  useEffect(() => {
+    if (finished && !sent.current) {
+      sent.current = true;
+      api.gameResult(mode, score).then((r) => setAward(r.xp)).catch(() => setAward(0));
+    }
+  }, [finished, score, mode]);
+
+  const task = tasks?.[idx];
+  const norm = (x: string) => x.trim().toLowerCase();
+
+  const pick = (o: string) => {
+    if (!task || flash) return;
+    const ok = norm(o) === norm(task.answer);
+    setFlash({ ok, picked: o });
+    if (ok) {
+      const c = combo + 1;
+      setCombo(c);
+      setCorrect((n) => n + 1);
+      setScore((n) => n + 4 + Math.min(c - 1, 4));
+    } else {
+      setCombo(0);
+      setLives((l) => l - 1);
+    }
+    setTimeout(() => {
+      setFlash(null);
+      setIdx((i) => i + 1);
+    }, ok ? 650 : 1500);
+  };
+
+  const back = <Button kind="secondary" title="← Назад" onPress={onClose} />;
+  if (error) return <Screen>{back}<ErrorText text={error} /></Screen>;
+  if (!tasks) return <Screen><ActivityIndicator size="large" color={colors.primary} /></Screen>;
+  if (tasks.length === 0) return <Screen>{back}<Muted>Для этого предмета и класса пока нет подходящих вопросов — выбери «Любой» предмет.</Muted></Screen>;
+
+  if (finished)
+    return (
+      <Screen>
+        <Title>{lives > 0 ? '🎉 Ты прошёл(а) всё!' : '💔 Жизни закончились'}</Title>
+        <Card>
+          <Scene name="jump" width={200} ratio={1.09} />
+          <Text style={s.big}>{correct} верных</Text>
+          <Muted>Звёзды: {score}</Muted>
+          <Muted>{award === null ? 'Считаем награду…' : award > 0 ? `Награда: +${award} XP` : 'Дневной лимит опыта за игры достигнут — приходи завтра!'}</Muted>
+          <Button title="Закрыть" onPress={onClose} />
+        </Card>
+      </Screen>
+    );
+
+  const opts = (task?.options ?? []).slice(0, 4);
+  return (
+    <Screen>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <RichText style={s.timer}>{'❤️'.repeat(lives) || '💔'}</RichText>
+        <RichText style={s.timer}>🔥 x{combo}</RichText>
+        <RichText style={s.timer}>⭐ {score}</RichText>
+      </Row>
+      <Card style={flash ? { backgroundColor: flash.ok ? colors.goodBg : colors.badBg } : undefined}>
+        <Text style={s.q}>{task?.prompt}</Text>
+        {flash && !flash.ok ? <Text style={s.wrongNote}>Правильно: {task?.answer}</Text> : null}
+      </Card>
+      {mode === 'balloons' ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
+          {opts.map((o, i) => {
+            const isRight = flash && norm(o) === norm(task!.answer);
+            const isWrongPick = flash && !flash.ok && o === flash.picked;
+            return (
+              <Pressable
+                key={o}
+                onPress={() => pick(o)}
+                style={{
+                  width: '44%', minHeight: 110, borderRadius: 60, backgroundColor: BALLOON_COLORS[i % 4], alignItems: 'center', justifyContent: 'center', padding: 14,
+                  opacity: isWrongPick ? 0.35 : 1, borderWidth: isRight ? 5 : 0, borderColor: '#2F9E44',
+                }}
+              >
+                <Text style={{ fontSize: 18, fontWeight: '800', color: '#1b1b1b', textAlign: 'center' }}>{flash && isWrongPick ? '💥' : o}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={{ gap: 12 }}>
+          {['Верно', 'Неверно'].map((o) => {
+            const right = flash && norm(o) === norm(task!.answer);
+            return (
+              <Pressable
+                key={o}
+                onPress={() => pick(o)}
+                style={{ minHeight: 84, borderRadius: 24, backgroundColor: o === 'Верно' ? '#69DB7C' : '#FF8787', alignItems: 'center', justifyContent: 'center', borderWidth: right ? 5 : 0, borderColor: '#2F9E44' }}
+              >
+                <Text style={{ fontSize: 24, fontWeight: '800', color: '#1b1b1b' }}>{o === 'Верно' ? '👍 Правда' : '👎 Неправда'}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+      <Button kind="secondary" title="Закончить" onPress={() => setLives(0)} />
+    </Screen>
+  );
+}
+
 function NumberInput({ value, onChange, onSubmit }: { value: string; onChange: (v: string) => void; onSubmit: () => void }) {
   return (
     <View>
@@ -258,6 +392,7 @@ function Memory({ subject, grade, onClose }: { subject?: string; grade?: number;
 }
 
 const s = StyleSheet.create({
+  wrongNote: { marginTop: 8, fontSize: 16, fontWeight: '700', color: colors.bad },
   timer: { fontSize: 22, fontWeight: '800', color: colors.text },
   q: { fontSize: 24, fontWeight: '800', color: colors.text, textAlign: 'center', marginVertical: 16 },
   opt: { borderWidth: 2, borderColor: colors.border, borderRadius: 12, padding: 14, marginVertical: 5, backgroundColor: '#fff' },
