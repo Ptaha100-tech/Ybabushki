@@ -46,3 +46,9 @@ backend `admin.controller/service.ts`, экран `app/src/screens/AdminScreen.t
 
 ## Генератор картинок (28.11.2026) — В РАБОТЕ
 Сервис AITunnel (api.aitunnel.ru/v1/images/generations, синхронно, ответ base64, поддерживает `input_references`, `background: transparent`, `aspect_ratio`; модели: gemini-nano-banana-2.1, seedream-4.5, seedream-5-0-flash, gpt-image-1, recraft/qwen — см. GET https://api.aitunnel.ru/public/aitunnel/models/images). Ключ — env `AITUNNEL_API_KEY` (скрипт `scripts/set-aitunnel.sh`). Backend: `images.service.ts` + маршруты `admin/images*`; админка: вкладка «Картинки» (`ImageLab` в AdminScreen), вырезание фона и скачивание — в браузере (`app/src/imgtools.ts`). nginx: client_max_body_size 16m, таймаут /api/ 180с.
+
+## Замена картинок из админки (art overrides)
+- Таблица `art_overrides` (key, data bytea, mime, version). Публично: `GET /api/art`, `GET /api/art/img?key=&v=`. Админ: `POST/DELETE /api/admin/art`.
+- Ключи: `hero:<герой>:<поза>`, `icon:<имя>`, `scene:<имя>`. Клиент: `app/src/art.ts` (`loadArt`, `artSrc`, `useArtTick`), Art.tsx использует их.
+- В админке: Картинки → «📌 Поставить на сервис» → выбрать место; «вернуть» сбрасывает.
+- Идея дальше: новые декоративные слоты (фоны, баннеры).

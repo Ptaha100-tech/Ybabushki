@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 export type Role = 'student' | 'teacher' | 'parent' | 'admin';
 export type TaskType = 'choice' | 'number' | 'text' | 'order' | 'match';
@@ -128,6 +128,15 @@ export class Purchase {
   @CreateDateColumn() createdAt: Date;
 }
 
+/** Картинки, поставленные администратором вместо встроенных (ключ вида hero:boy:wave). */
+@Entity('art_overrides')
+export class ArtOverride {
+  @PrimaryColumn({ type: 'varchar' }) key: string;
+  @Column({ type: 'bytea' }) data: Buffer;
+  @Column({ type: 'varchar' }) mime: string;
+  @Column({ type: 'bigint' }) version: string;
+}
+
 @Entity('game_results')
 export class GameResult {
   @PrimaryGeneratedColumn('uuid') id: string;
@@ -179,4 +188,5 @@ export const ENTITIES = [
   GameResult,
   QuestClaim,
   Purchase,
+  ArtOverride,
 ];

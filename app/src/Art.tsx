@@ -1,20 +1,24 @@
 import React from 'react';
 import { Image, ImageStyle, StyleProp, Text, TextStyle } from 'react-native';
+import { artSrc, useArtTick } from './art';
 import { HeroKey, heroImg, ICONS, Pose, SCENES } from './heroes';
 
 /** Персонаж в нужной позе. Размер — высота в пикселях. */
 export function HeroPic({ hero, pose, size, style }: { hero: HeroKey; pose: Pose; size: number; style?: StyleProp<ImageStyle> }) {
-  return <Image source={heroImg(hero, pose)} resizeMode="contain" style={[{ width: size * 0.9, height: size }, style]} />;
+  useArtTick();
+  return <Image source={artSrc(`hero:${hero}:${pose}`, heroImg(hero, pose))} resizeMode="contain" style={[{ width: size * 0.9, height: size }, style]} />;
 }
 
 /** Значок из набора иллюстраций. */
 export function Icon({ name, size = 40, style }: { name: keyof typeof ICONS; size?: number; style?: StyleProp<ImageStyle> }) {
-  return <Image source={ICONS[name]} resizeMode="contain" style={[{ width: size, height: size }, style]} />;
+  useArtTick();
+  return <Image source={artSrc(`icon:${String(name)}`, ICONS[name])} resizeMode="contain" style={[{ width: size, height: size }, style]} />;
 }
 
 /** Групповая сцена (иллюстрация с тремя героями). */
 export function Scene({ name, width, ratio, style }: { name: keyof typeof SCENES; width: number; ratio: number; style?: StyleProp<ImageStyle> }) {
-  return <Image source={SCENES[name]} resizeMode="contain" style={[{ width, height: width / ratio }, style]} />;
+  useArtTick();
+  return <Image source={artSrc(`scene:${String(name)}`, SCENES[name])} resizeMode="contain" style={[{ width, height: width / ratio }, style]} />;
 }
 
 /** Эмодзи → наша картинка. Всё, чего здесь нет, остаётся обычным эмодзи. */
@@ -49,6 +53,7 @@ const EMOJI_RX = new RegExp('(' + Object.keys(EMOJI).map((k) => k + '\\uFE0F?').
 
 /** Текст, где известные эмодзи заменены нашими картинками (размер берётся из шрифта). */
 export function RichText({ children, style, imgSize }: { children: React.ReactNode; style?: StyleProp<TextStyle>; imgSize?: number }) {
+  useArtTick();
   const flat = StyleSheetFlat(style);
   const size = imgSize ?? Math.round((flat.fontSize ?? 16) * 1.35);
   const parts: React.ReactNode[] = [];
@@ -58,7 +63,7 @@ export function RichText({ children, style, imgSize }: { children: React.ReactNo
         .split(EMOJI_RX)
         .forEach((piece, i) => {
           const k = EMOJI[piece.replace(/\uFE0F/g, '')];
-          parts.push(k ? <Image key={ci + '-' + i} source={ICONS[k]} resizeMode="contain" style={{ width: size, height: size }} /> : piece);
+          parts.push(k ? <Image key={ci + '-' + i} source={artSrc(`icon:${k}`, ICONS[k])} resizeMode="contain" style={{ width: size, height: size }} /> : piece);
         });
     } else parts.push(c);
   });

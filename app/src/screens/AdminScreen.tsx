@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, Text, View } from 'react-native';
 import { AdminStats, AdminTopic, AdminUserDetail, AdminUserRow, api, errMsg, Role, User } from '../api';
-import { HERO_NAMES, HeroKey, heroImg } from '../heroes';
-import { assetToDataUri, downloadDataUri, isWebEnv, pickImageFile, removeBackground } from '../imgtools';
+import { artSrc, loadArt, overriddenKeys } from '../art';
+import { HERO_NAMES, HeroKey, heroImg, ICONS, SCENES } from '../heroes';
+import { assetToDataUri, downloadDataUri, isWebEnv, pickImageFile, removeBackground, toPngDataUri } from '../imgtools';
 import { Button, Card, Chip, colors, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
 type Tab = 'stats' | 'users' | 'topics' | 'mail' | 'img';
@@ -278,6 +279,78 @@ const ASPECTS = ['1:1', '4:3', '3:4', '16:9', '9:16'];
 interface Gen { uri: string; name: string }
 
 /** Генератор картинок: описание → варианты → вырезать фон → скачать. */
+const POSES = ['wave', 'point', 'book', 'think', 'idea', 'thumbs', 'shrug', 'write', 'shrug2', 'walk'];
+
+/** Выбор места в сервисе, куда поставить картинку. */
+function SlotPicker({ uri, onDone }: { uri: string; onDone: (msg: string) => void }) {
+  const [group, setGroup] = useState<'hero' | 'icon' | 'scene'>('hero');
+  const [hero, setHero] = useState<HeroKey>('boy');
+  const [busy, setBusy] = useState(false);
+  const [, tick] = useState(0);
+  const done = overriddenKeys();
+  const keys: string[] =
+    group === 'hero' ? POSES.map((p) => `hero:${hero}:${p}`) : group === 'icon' ? Object.keys(ICONS).map((k) => `icon:${k}`) : Object.keys(SCENES).map((k) => `scene:${k}`);
+
+  const put = async (key: string) => {
+    setBusy(true);
+    try {
+      await api.adminArtSet(key, await toPngDataUri(uri, 1024));
+      await loadArt();
+      tick((n) => n + 1);
+      onDone(`✅ Поставлено: ${key}. Откройте сайт заново (обновите страницу), чтобы увидеть.`);
+    } catch (e) {
+      onDone(errMsg(e));
+    }
+    setBusy(false);
+  };
+  const reset = async (key: string) => {
+    setBusy(true);
+    try {
+      await api.adminArtRemove(key);
+      await loadArt();
+      tick((n) => n + 1);
+      onDone(`↩️ Возвращена исходная картинка: ${key}`);
+    } catch (e) {
+      onDone(errMsg(e));
+    }
+    setBusy(false);
+  };
+
+  return (
+    <View style={{ marginTop: 8 }}>
+      <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 6 }}>Куда поставить?</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+        <Chip label="Герои" active={group === 'hero'} onPress={() => setGroup('hero')} />
+        <Chip label="Значки" active={group === 'icon'} onPress={() => setGroup('icon')} />
+        <Chip label="Сцены" active={group === 'scene'} onPress={() => setGroup('scene')} />
+      </Row>
+      {group === 'hero' && (
+        <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+          {(['boy', 'glasses', 'pink'] as HeroKey[]).map((h) => <Chip key={h} label={HERO_NAMES[h]} active={hero === h} onPress={() => setHero(h)} />)}
+        </Row>
+      )}
+      {busy && <ActivityIndicator color={colors.primary} />}
+      <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+        {keys.map((k) => {
+          const [kind, a, b] = k.split(':');
+          const fb = kind === 'hero' ? heroImg(a as HeroKey, b as any) : kind === 'icon' ? (ICONS as any)[a] : (SCENES as any)[a];
+          const on = done.includes(k);
+          return (
+            <View key={k} style={{ width: 84, alignItems: 'center' }}>
+              <Text onPress={() => put(k)} style={{ cursor: 'pointer' } as any}>
+                <Image source={artSrc(k, fb)} style={{ width: 76, height: 76, resizeMode: 'contain', backgroundColor: on ? '#DCFCE7' : '#F3F4F6', borderRadius: 10 }} />
+              </Text>
+              <Text style={{ fontSize: 10, color: colors.muted }} numberOfLines={1}>{kind === 'hero' ? b : a}</Text>
+              {on && <Text onPress={() => reset(k)} style={{ fontSize: 11, color: '#DC2626' }}>вернуть</Text>}
+            </View>
+          );
+        })}
+      </Row>
+      <Muted>Нажмите на картинку-место — новая картинка встанет вместо неё для всех. Зелёные — уже заменены.</Muted>
+    </View>
+  );
+}
+
 function ImageLab() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [models, setModels] = useState<{ id: string; name: string }[]>([]);
@@ -292,6 +365,7 @@ function ImageLab() {
   const [err, setErr] = useState('');
   const [info, setInfo] = useState('');
   const [out, setOut] = useState<Gen[]>([]);
+  const [slotFor, setSlotFor] = useState<string | null>(null);
   const web = isWebEnv;
 
   useEffect(() => {
@@ -394,9 +468,13 @@ function ImageLab() {
           ) : (
             <Muted>Вырезание и скачивание доступны на сайте (в браузере).</Muted>
           )}
+          <View style={{ marginTop: 8 }}>
+            <Button title={slotFor === g.name ? 'Скрыть' : '📌 Поставить на сервис'} onPress={() => setSlotFor(slotFor === g.name ? null : g.name)} />
+          </View>
+          {slotFor === g.name && <SlotPicker uri={g.uri} onDone={setInfo} />}
         </Card>
       ))}
-      <Muted>Понравившиеся картинки скачайте и пришлите мне в чат — я подключу их в сервис.</Muted>
+      <Muted>Понравилась картинка — нажмите «Поставить на сервис» и выберите, какую картинку она заменит.</Muted>
     </>
   );
 }

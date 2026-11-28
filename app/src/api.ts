@@ -209,6 +209,8 @@ export const api = {
   adminImageModels: () => request<{ id: string; name: string }[]>('GET', '/admin/images/models'),
   adminImage: (b: { prompt: string; model: string; aspectRatio?: string; background?: string; n?: number; refs?: string[] }) =>
     request<{ images: { b64: string; mediaType: string }[]; cost: number | null; balance: number | null }>('POST', '/admin/images', b),
+  adminArtSet: (key: string, data: string) => request<{ ok: boolean }>('POST', '/admin/art', { key, data }),
+  adminArtRemove: (key: string) => request<{ ok: boolean }>('DELETE', `/admin/art?key=${encodeURIComponent(key)}`),
   adminStats: () => request<AdminStats>('GET', '/admin/stats'),
   adminUsers: (q: string, role: string, page: number) =>
     request<{ total: number; page: number; rows: AdminUserRow[] }>('GET', `/admin/users?q=${encodeURIComponent(q)}&role=${role}&page=${page}`),

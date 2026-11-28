@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArtService } from './art.service';
 import { ImagesService } from './images.service';
 import { AdminService } from './admin.service';
 import { AuthGuard, AuthUser, CurrentUser, Roles } from './auth/guards';
@@ -13,6 +14,10 @@ class ImageDto {
   @IsOptional() @IsIn(['auto', 'transparent', 'opaque']) background?: string;
   @IsOptional() @IsInt() @Min(1) @Max(4) n?: number;
   @IsOptional() @IsArray() @ArrayMaxSize(3) @IsString({ each: true }) @MaxLength(6_000_000, { each: true }) refs?: string[];
+}
+class ArtDto {
+  @IsString() @MaxLength(80) key: string;
+  @IsString() @MaxLength(6_000_000) data: string;
 }
 class BlockDto { @IsBoolean() blocked: boolean }
 class RoleDto { @IsIn(['student', 'teacher', 'parent', 'admin']) role: Role }
@@ -29,7 +34,10 @@ class BroadcastDto {
 @UseGuards(AuthGuard)
 @Roles('admin')
 export class AdminController {
-  constructor(private admin: AdminService, private images: ImagesService) {}
+  constructor(private admin: AdminService, private images: ImagesService, private art: ArtService) {}
+
+  @Post('art') artSet(@Body() d: ArtDto) { return this.art.set(d.key, d.data); }
+  @Delete('art') artRemove(@Query('key') key: string) { return this.art.remove(key); }
 
   @Get('images/status') imageStatus() { return this.images.status(); }
   @Get('images/models') imageModels() { return this.images.models(); }
