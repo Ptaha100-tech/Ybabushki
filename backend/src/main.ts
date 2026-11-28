@@ -1,11 +1,13 @@
 import 'reflect-metadata';
 import { BadRequestException, ValidationError, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { rateLimit } from './ratelimit';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useBodyParser('json', { limit: '16mb' }); // картинки-референсы в генераторе
   app.setGlobalPrefix('api');
   // Вход и регистрация: не больше 30 запросов в минуту с одного адреса.
   app.use('/api/auth/login', rateLimit(30, 60_000));

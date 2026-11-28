@@ -1,10 +1,19 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
-import { IsBoolean, IsIn, IsInt, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ImagesService } from './images.service';
 import { AdminService } from './admin.service';
 import { AuthGuard, AuthUser, CurrentUser, Roles } from './auth/guards';
 import { Role } from './entities';
 
 class SubDto { @IsInt() @Min(0) @Max(3650) days: number }
+class ImageDto {
+  @IsString() @MinLength(3) @MaxLength(3000) prompt: string;
+  @IsString() @MaxLength(100) model: string;
+  @IsOptional() @IsIn(['1:1', '4:3', '3:4', '16:9', '9:16']) aspectRatio?: string;
+  @IsOptional() @IsIn(['auto', 'transparent', 'opaque']) background?: string;
+  @IsOptional() @IsInt() @Min(1) @Max(4) n?: number;
+  @IsOptional() @IsArray() @ArrayMaxSize(3) @IsString({ each: true }) @MaxLength(6_000_000, { each: true }) refs?: string[];
+}
 class BlockDto { @IsBoolean() blocked: boolean }
 class RoleDto { @IsIn(['student', 'teacher', 'parent', 'admin']) role: Role }
 class CoinsDto { @IsInt() @Min(-100000) @Max(100000) delta: number }
@@ -20,7 +29,11 @@ class BroadcastDto {
 @UseGuards(AuthGuard)
 @Roles('admin')
 export class AdminController {
-  constructor(private admin: AdminService) {}
+  constructor(private admin: AdminService, private images: ImagesService) {}
+
+  @Get('images/status') imageStatus() { return this.images.status(); }
+  @Get('images/models') imageModels() { return this.images.models(); }
+  @Post('images') imageGenerate(@Body() d: ImageDto) { return this.images.generate(d); }
 
   @Get('stats') stats() { return this.admin.stats(); }
   @Get('users') list(@Query('q') q?: string, @Query('role') role?: string, @Query('page') page?: string) { return this.admin.list({ q, role, page: Number(page) }); }

@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, Text, View } from 'react-native';
 import { AdminStats, AdminTopic, AdminUserDetail, AdminUserRow, api, errMsg, Role, User } from '../api';
+import { HERO_NAMES, HeroKey, heroImg } from '../heroes';
+import { assetToDataUri, downloadDataUri, isWebEnv, pickImageFile, removeBackground } from '../imgtools';
 import { Button, Card, Chip, colors, ErrorText, Field, Heading, InfoText, Muted, Row, Screen, Title } from '../ui';
 
-type Tab = 'stats' | 'users' | 'topics' | 'mail';
+type Tab = 'stats' | 'users' | 'topics' | 'mail' | 'img';
 const TABS: { k: Tab; t: string }[] = [
   { k: 'stats', t: 'Обзор' },
   { k: 'users', t: 'Люди' },
   { k: 'topics', t: 'Темы' },
   { k: 'mail', t: 'Рассылка' },
+  { k: 'img', t: '🎨 Картинки' },
 ];
 const ROLE_RU: Record<Role, string> = { student: 'Ученик', teacher: 'Учитель', parent: 'Родитель', admin: 'Админ' };
 const fmt = (n: number) => n.toLocaleString('ru-RU');
@@ -270,6 +273,134 @@ function Mail() {
   );
 }
 
+const STYLE = ' Стиль: яркий дружелюбный 3D-мультфильм в духе Pixar, мягкий свет, большие добрые глаза, чистые насыщенные цвета, для детской образовательной платформы, без надписей и текста.';
+const ASPECTS = ['1:1', '4:3', '3:4', '16:9', '9:16'];
+interface Gen { uri: string; name: string }
+
+/** Генератор картинок: описание → варианты → вырезать фон → скачать. */
+function ImageLab() {
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [models, setModels] = useState<{ id: string; name: string }[]>([]);
+  const [model, setModel] = useState('gemini-nano-banana-2.1');
+  const [prompt, setPrompt] = useState('');
+  const [aspect, setAspect] = useState('1:1');
+  const [bg, setBg] = useState<'auto' | 'transparent' | 'green'>('green');
+  const [n, setN] = useState(2);
+  const [style, setStyle] = useState(true);
+  const [refs, setRefs] = useState<{ label: string; uri: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [info, setInfo] = useState('');
+  const [out, setOut] = useState<Gen[]>([]);
+  const web = isWebEnv;
+
+  useEffect(() => {
+    api.adminImageStatus().then((r) => setConfigured(r.configured)).catch((e) => setErr(errMsg(e)));
+    api.adminImageModels().then(setModels).catch(() => undefined);
+  }, []);
+
+  const addHero = async (h: HeroKey) => {
+    try {
+      const uri = await assetToDataUri(heroImg(h, 'wave'));
+      setRefs((r) => (r.some((x) => x.label === HERO_NAMES[h]) ? r.filter((x) => x.label !== HERO_NAMES[h]) : [...r, { label: HERO_NAMES[h], uri }].slice(0, 3)));
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+  };
+  const addFile = async () => {
+    const uri = await pickImageFile();
+    if (uri) setRefs((r) => [...r, { label: 'Файл', uri }].slice(0, 3));
+  };
+
+  const go = async () => {
+    setErr('');
+    setInfo('');
+    setBusy(true);
+    try {
+      let p = prompt.trim();
+      if (bg === 'green') p += ' Фон: ровный однотонный ярко-зелёный (#00FF00), без теней и градиентов, чтобы фон легко вырезался.';
+      if (style) p += STYLE;
+      const r = await api.adminImage({ prompt: p, model, aspectRatio: aspect, background: bg === 'transparent' ? 'transparent' : 'auto', n, refs: refs.map((x) => x.uri) });
+      setOut((o) => [...r.images.map((i, k) => ({ uri: `data:${i.mediaType};base64,${i.b64}`, name: `art-${Date.now()}-${k + 1}.png` })), ...o].slice(0, 12));
+      setInfo(`Готово. Стоимость: ${r.cost ?? '?'} ₽, остаток на балансе: ${r.balance ?? '?'} ₽`);
+    } catch (e) {
+      setErr(errMsg(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cut = async (i: number) => {
+    try {
+      const uri = await removeBackground(out[i].uri);
+      setOut((o) => o.map((x, k) => (k === i ? { ...x, uri } : x)));
+    } catch (e) {
+      setErr(errMsg(e));
+    }
+  };
+
+  if (configured === false)
+    return (
+      <Card>
+        <Heading>Нужен ключ AITunnel</Heading>
+        <Muted>Зайдите на aitunnel.ru → API-ключи → создайте ключ. Затем на сервере в Termius выполните:</Muted>
+        <Text selectable style={{ fontFamily: 'monospace', color: colors.text, marginVertical: 8 }}>cd ~/Ybabushki && bash scripts/set-aitunnel.sh</Text>
+        <Muted>Вставьте ключ и нажмите Enter. После этого обновите эту страницу.</Muted>
+      </Card>
+    );
+
+  const modelList = models.length ? models : [{ id: model, name: model }];
+  return (
+    <>
+      <Heading>Что нарисовать?</Heading>
+      <Field label="Описание" value={prompt} onChangeText={setPrompt} multiline placeholder="Например: весёлая лисичка с рюкзаком идёт в школу" style={{ minHeight: 100 }} />
+      <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 6 }}>Модель</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        {modelList.slice(0, 12).map((m) => <Chip key={m.id} label={m.name || m.id} active={model === m.id} onPress={() => setModel(m.id)} />)}
+      </Row>
+      <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 6 }}>Пропорции</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        {ASPECTS.map((a) => <Chip key={a} label={a} active={aspect === a} onPress={() => setAspect(a)} />)}
+      </Row>
+      <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 6 }}>Фон</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        <Chip label="Зелёный (потом вырежу)" active={bg === 'green'} onPress={() => setBg('green')} />
+        <Chip label="Прозрачный (если модель умеет)" active={bg === 'transparent'} onPress={() => setBg('transparent')} />
+        <Chip label="Как получится" active={bg === 'auto'} onPress={() => setBg('auto')} />
+      </Row>
+      <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 6 }}>Сколько вариантов</Text>
+      <Row style={{ gap: 6, marginBottom: 10 }}>
+        {[1, 2, 3, 4].map((k) => <Chip key={k} label={String(k)} active={n === k} onPress={() => setN(k)} />)}
+      </Row>
+      <Chip label={style ? '✓ Наш стиль (3D-мультфильм) включён' : 'Наш стиль выключен'} active={style} onPress={() => setStyle(!style)} />
+      <Text style={{ fontWeight: '700', color: colors.text, marginVertical: 8 }}>Образец стиля (референс, до 3)</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        {(['boy', 'glasses', 'pink'] as HeroKey[]).map((h) => <Chip key={h} label={HERO_NAMES[h]} active={refs.some((x) => x.label === HERO_NAMES[h])} onPress={() => addHero(h)} />)}
+        {web && <Chip label="＋ Свой файл" onPress={addFile} />}
+        {refs.length > 0 && <Chip label="Сбросить" onPress={() => setRefs([])} />}
+      </Row>
+      <ErrorText text={err} />
+      <InfoText text={info} />
+      {busy ? <ActivityIndicator size="large" color={colors.primary} /> : <Button title="🎨 Нарисовать" onPress={go} disabled={prompt.trim().length < 3} />}
+      {busy && <Muted>Рисуем, это может занять до минуты…</Muted>}
+      {out.map((g, i) => (
+        <Card key={g.name}>
+          <Image source={{ uri: g.uri }} style={{ width: '100%', aspectRatio: 1, resizeMode: 'contain', backgroundColor: '#E5E7EB', borderRadius: 12 }} />
+          {web ? (
+            <Row style={{ gap: 8, marginTop: 8 }}>
+              <View style={{ flex: 1 }}><Button title="✂️ Вырезать фон" kind="secondary" onPress={() => cut(i)} /></View>
+              <View style={{ flex: 1 }}><Button title="⬇️ Скачать" kind="secondary" onPress={() => downloadDataUri(g.uri, g.name)} /></View>
+            </Row>
+          ) : (
+            <Muted>Вырезание и скачивание доступны на сайте (в браузере).</Muted>
+          )}
+        </Card>
+      ))}
+      <Muted>Понравившиеся картинки скачайте и пришлите мне в чат — я подключу их в сервис.</Muted>
+    </>
+  );
+}
+
 export default function AdminScreen({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>('stats');
   return (
@@ -283,6 +414,7 @@ export default function AdminScreen({ user, onLogout }: { user: User; onLogout: 
       {tab === 'users' && <People me={user.id} />}
       {tab === 'topics' && <Topics />}
       {tab === 'mail' && <Mail />}
+      {tab === 'img' && <ImageLab />}
       <View style={{ height: 16 }} />
       <Button title="Выйти" kind="secondary" onPress={onLogout} />
     </Screen>

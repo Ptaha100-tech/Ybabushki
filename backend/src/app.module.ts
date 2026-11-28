@@ -1,6 +1,7 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ImagesService } from './images.service';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AuthController } from './auth/auth.controller';
@@ -51,6 +52,6 @@ class HealthController {
     JwtModule.register({ global: true, secret: jwtSecret, signOptions: { expiresIn: '30d' } }),
   ],
   controllers: [HealthController, AuthController, LearningController, GamesController, RewardsController, ClassesController, ParentController, TeacherContentController, AdminController],
-  providers: [AuthService, AuthGuard, LearningService, GamesService, RewardsService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService, ReportsService, TeacherContentService, AdminService],
+  providers: [AuthService, AuthGuard, LearningService, GamesService, RewardsService, ClassesService, ParentService, SubscriptionsService, SeedService, MailerService, ReportsService, TeacherContentService, AdminService, ImagesService],
 })
 export class AppModule {}
